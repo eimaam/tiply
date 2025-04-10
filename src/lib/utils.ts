@@ -24,3 +24,14 @@ export const smoothScrollTo = (targetId: string, offset = 80) => {
   }
   return false;
 }
+
+
+export const PROJECT_INFO = {
+  name: "TipLink",
+  description: "A decentralized tipping platform for creators and communities.",
+  url: "https://tiplink.xyz",
+  image: "https://tiplink.xyz/logo.png",
+  twitterUrl: "https://twitter.com/tipplink",
+  repoUrl: "https://github.com/eimaam/tiplink",
+  supportEmail: "support@tipplink.xyz"
+}

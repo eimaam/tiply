@@ -11,9 +11,9 @@ import {
   CustomerServiceOutlined, 
   TwitterOutlined, 
   GithubOutlined, 
-  LinkedinOutlined,
   SendOutlined
 } from '@ant-design/icons'
+import { PROJECT_INFO } from '@/lib/utils'
 
 export function ContactPage() {
   const [formState, setFormState] = React.useState({
@@ -92,7 +92,7 @@ export function ContactPage() {
                   <Input
                     id="name"
                     name="name"
-                    placeholder="John Doe"
+                    placeholder=""
                     value={formState.name}
                     onChange={handleChange}
                     required
@@ -105,7 +105,7 @@ export function ContactPage() {
                     id="email"
                     name="email"
                     type="email"
-                    placeholder="john@example.com"
+                    placeholder="tipper@tipplink.xyz"
                     value={formState.email}
                     onChange={handleChange}
                     required
@@ -138,7 +138,7 @@ export function ContactPage() {
                 </div>
                 
                 <Button 
-                  type="submit" 
+                  htmlType="submit" 
                   className="w-full" 
                   disabled={isSubmitting || isSuccess}
                 >
@@ -172,9 +172,9 @@ export function ContactPage() {
                       <p className="text-brand-muted-foreground">
                         support@tipplink.com
                       </p>
-                      <p className="text-brand-muted-foreground">
+                      {/* <p className="text-brand-muted-foreground">
                         partnerships@tipplink.com
-                      </p>
+                      </p> */}
                     </div>
                   </div>
                   
@@ -187,10 +187,10 @@ export function ContactPage() {
                         Support Hours
                       </h3>
                       <p className="text-brand-muted-foreground">
-                        Monday - Friday: 9am - 6pm EST
+                        Monday - Friday: 8am - 6pm UTC+1
                       </p>
                       <p className="text-brand-muted-foreground">
-                        Weekend: 10am - 2pm EST
+                        Weekend: 10am - 1pm UTC+1
                       </p>
                     </div>
                   </div>
@@ -204,7 +204,7 @@ export function ContactPage() {
                 
                 <div className="flex space-x-4">
                   <a 
-                    href="https://twitter.com/tipplink" 
+                    href={PROJECT_INFO.twitterUrl as string} 
                     target="_blank"
                     rel="noopener noreferrer"
                     className="bg-brand-surface p-3 rounded-full ring-1 ring-brand-border hover:ring-brand-primary transition-colors"
@@ -213,21 +213,12 @@ export function ContactPage() {
                   </a>
                   
                   <a 
-                    href="https://github.com/tipplink" 
+                    href={PROJECT_INFO.repoUrl as string}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="bg-brand-surface p-3 rounded-full ring-1 ring-brand-border hover:ring-brand-primary transition-colors"
                   >
                     <GithubOutlined className="text-xl" />
-                  </a>
-                  
-                  <a 
-                    href="https://linkedin.com/company/tipplink" 
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-brand-surface p-3 rounded-full ring-1 ring-brand-border hover:ring-brand-primary transition-colors"
-                  >
-                    <LinkedinOutlined className="text-xl" />
                   </a>
                 </div>
               </div>
