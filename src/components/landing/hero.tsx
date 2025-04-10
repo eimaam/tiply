@@ -1,6 +1,8 @@
 import * as React from 'react'
+import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { motion } from 'framer-motion'
+import { smoothScrollTo } from '@/lib/utils'
 
 const container = {
   hidden: { opacity: 0 },
@@ -18,6 +20,11 @@ const item = {
 }
 
 export function Hero() {
+  // Function to handle smooth scrolling to the How It Works section
+  const scrollToHowItWorks = () => {
+    smoothScrollTo('how-it-works');
+  };
+
   return (
     <div className="relative overflow-hidden">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24 md:py-32">
@@ -46,8 +53,16 @@ export function Hero() {
             variants={item}
             className="mt-10 flex items-center justify-center gap-x-6"
           >
-            <Button size="lg">Start Tipping</Button>
-            <Button variant="outline" size="lg">Learn More</Button>
+            <Link to="/signup">
+              <Button size="lg">Start Tipping</Button>
+            </Link>
+            <Button 
+              variant="outline" 
+              size="lg" 
+              onClick={scrollToHowItWorks}
+            >
+              Learn More
+            </Button>
           </motion.div>
         </motion.div>
       </div>

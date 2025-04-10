@@ -49,6 +49,7 @@ export function ThemeToggle() {
       >
         ☀️
       </motion.div>
+      <span className="sr-only">Toggle theme</span>
     </Button>
   )
 }

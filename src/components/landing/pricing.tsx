@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { CheckOutlined } from '@ant-design/icons'
@@ -85,13 +86,15 @@ export function Pricing() {
                   ))}
                 </ul>
               </div>
-              <Button
-                variant={plan.name === 'Premium' ? 'default' : 'outline'}
-                className="mt-8"
-                size="lg"
-              >
-                Get {plan.name}
-              </Button>
+              <Link to={`/signup?plan=${plan.name.toLowerCase()}`}>
+                <Button
+                  variant={plan.name === 'Premium' ? 'default' : 'outline'}
+                  className="mt-8 w-full"
+                  size="lg"
+                >
+                  Get {plan.name}
+                </Button>
+              </Link>
             </div>
           ))}
         </motion.div>

@@ -1,17 +1,19 @@
 import * as React from 'react'
+import { Link } from 'react-router-dom'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
+import { smoothScrollTo } from '@/lib/utils'
 
 const navigation = {
   main: [
     { name: 'How it works', href: '#how-it-works' },
     { name: 'Features', href: '#features' },
     { name: 'Pricing', href: '#pricing' },
-    { name: 'Start Tipping', href: '#start' },
+    { name: 'Start Tipping', href: '/t/demo' },
   ],
   social: [
     {
       name: 'Twitter',
-      href: '#',
+      href: 'https://twitter.com/tipplink',
       icon: (props: React.SVGProps<SVGSVGElement>) => (
         <svg fill="currentColor" viewBox="0 0 24 24" {...props}>
           <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
@@ -20,7 +22,7 @@ const navigation = {
     },
     {
       name: 'GitHub',
-      href: '#',
+      href: 'https://github.com/tipplink/tipp-link',
       icon: (props: React.SVGProps<SVGSVGElement>) => (
         <svg fill="currentColor" viewBox="0 0 24 24" {...props}>
           <path
@@ -35,18 +37,37 @@ const navigation = {
 }
 
 export function Footer() {
+  // Function to handle smooth scrolling for anchor links
+  const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
+    if (targetId.startsWith('#')) {
+      e.preventDefault();
+      smoothScrollTo(targetId);
+    }
+  };
+
   return (
     <footer className="border-t border-brand-border">
       <div className="mx-auto max-w-7xl overflow-hidden px-6 py-12 sm:py-16 lg:px-8">
-        <nav className="flex justify-center space-x-12" aria-label="Footer">
+        <nav className="flex flex-wrap justify-center space-x-6 sm:space-x-12" aria-label="Footer">
           {navigation.main.map((item) => (
-            <a
-              key={item.name}
-              href={item.href}
-              className="text-sm leading-6 text-brand-muted-foreground hover:text-brand-foreground"
-            >
-              {item.name}
-            </a>
+            item.href.startsWith('#') ? (
+              <a
+                key={item.name}
+                href={item.href}
+                onClick={(e) => handleSmoothScroll(e, item.href)}
+                className="text-sm leading-6 text-brand-muted-foreground hover:text-brand-foreground"
+              >
+                {item.name}
+              </a>
+            ) : (
+              <Link
+                key={item.name}
+                to={item.href}
+                className="text-sm leading-6 text-brand-muted-foreground hover:text-brand-foreground"
+              >
+                {item.name}
+              </Link>
+            )
           ))}
         </nav>
 
@@ -55,6 +76,8 @@ export function Footer() {
             <a
               key={item.name}
               href={item.href}
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-brand-muted-foreground hover:text-brand-foreground"
             >
               <span className="sr-only">{item.name}</span>
@@ -65,7 +88,7 @@ export function Footer() {
         </div>
 
         <p className="mt-8 text-center text-xs leading-5 text-brand-muted-foreground">
-          &copy; 2024 TipLink. All rights reserved.
+          &copy; {new Date().getFullYear()} TipLink. All rights reserved.
         </p>
       </div>
     </footer>
