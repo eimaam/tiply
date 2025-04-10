@@ -5,6 +5,7 @@ import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { motion, AnimatePresence } from 'framer-motion'
 import { smoothScrollTo } from '@/lib/utils'
 import { MenuOutlined, CloseOutlined } from '@ant-design/icons'
+import logo from '@/assets/images/tipp-link-logo.png'
 
 const navLinks = [
   { href: '#how-it-works', label: 'How it works' },
@@ -57,8 +58,9 @@ export function Navbar() {
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center">
-          <Link to="/" className="text-xl font-bold text-brand-primary">
-            TipLink
+          <Link to="/" className="flex items-center space-x">
+            <img src={logo} alt="Tipp Link Logo" className="h-8 md:h-12 w-auto" />
+            <span className="text-xl font-bold text-brand-primary">TipLink</span>
           </Link>
         </div>
         

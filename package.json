@@ -1,5 +1,6 @@
 {
-  "name": "tiplink",
+  "name": "tipplink",
+  "author": "Imam Dahir Dan-Azumi",
   "private": true,
   "version": "0.1.0",
   "type": "module",

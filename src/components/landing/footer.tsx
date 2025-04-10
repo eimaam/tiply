@@ -2,6 +2,7 @@ import * as React from 'react'
 import { Link } from 'react-router-dom'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { PROJECT_INFO, smoothScrollTo } from '@/lib/utils'
+import logo from '@/assets/images/tipp-link-logo.png'
 
 const navigation = {
   main: [
@@ -48,7 +49,14 @@ export function Footer() {
   return (
     <footer className="border-t border-brand-border">
       <div className="mx-auto max-w-7xl overflow-hidden px-6 py-12 sm:py-16 lg:px-8">
-        <nav className="flex flex-wrap justify-center space-x-6 sm:space-x-12" aria-label="Footer">
+        <div className="flex justify-center">
+          <Link to="/" className="flex items-center space-x">
+            <img src={logo} alt="Tipp Link Logo" className="h-10 md:h-14 w-auto" />
+            <span className="text-xl font-bold text-brand-primary">TippLink</span>
+          </Link>
+        </div>
+        
+        <nav className="mt-8 flex flex-wrap justify-center space-x-6 sm:space-x-12" aria-label="Footer">
           {navigation.main.map((item) => (
             item.href.startsWith('#') ? (
               <a
