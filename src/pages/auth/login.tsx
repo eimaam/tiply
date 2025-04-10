@@ -90,17 +90,12 @@ export function Login() {
         >
           <div className="space-y-2">
             <label className="text-sm font-medium">Email</label>
-            <div className="relative">
-              <div className="absolute left-3 top-3 text-brand-muted-foreground">
-                <MailOutlined />
-              </div>
-              <Input 
-                type="email"
-                placeholder="name@example.com"
-                className="pl-10"
-                required
-              />
-            </div>
+            <Input 
+              type="email"
+              placeholder="name@example.com"
+              prefixIcon={<MailOutlined />}
+              required
+            />
           </div>
           
           <div className="space-y-2">
@@ -110,21 +105,16 @@ export function Login() {
                 Forgot password?
               </Link>
             </div>
-            <div className="relative">
-              <div className="absolute left-3 top-3 text-brand-muted-foreground">
-                <LockOutlined />
-              </div>
-              <Input
-                type="password"
-                placeholder="••••••••"
-                className="pl-10"
-                required
-              />
-            </div>
+            <Input
+              type="password"
+              placeholder="••••••••"
+              prefixIcon={<LockOutlined />}
+              required
+            />
           </div>
           
           <Button 
-            type="submit" 
+            htmlType="submit" 
             className="w-full" 
             size="lg"
             loading={loading}

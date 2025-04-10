@@ -90,17 +90,12 @@ export function SignUp() {
         >
           <div className="space-y-2">
             <label className="text-sm font-medium">Username</label>
-            <div className="relative">
-              <div className="absolute left-3 top-3 text-brand-muted-foreground">
-                <UserOutlined />
-              </div>
-              <Input 
-                type="text"
-                placeholder="yourname"
-                className="pl-10"
-                required
-              />
-            </div>
+            <Input 
+              type="text"
+              placeholder="yourname"
+              prefixIcon={<UserOutlined />}
+              required
+            />
             <p className="text-xs text-brand-muted-foreground">
               This will be your TipLink URL: tiplink.io/<span className="text-brand-foreground">yourname</span>
             </p>
@@ -108,37 +103,27 @@ export function SignUp() {
           
           <div className="space-y-2">
             <label className="text-sm font-medium">Email</label>
-            <div className="relative">
-              <div className="absolute left-3 top-3 text-brand-muted-foreground">
-                <MailOutlined />
-              </div>
-              <Input 
-                type="email"
-                placeholder="name@example.com"
-                className="pl-10"
-                required
-              />
-            </div>
+            <Input 
+              type="email"
+              placeholder="name@example.com"
+              prefixIcon={<MailOutlined />}
+              required
+            />
           </div>
           
           <div className="space-y-2">
             <label className="text-sm font-medium">Password</label>
-            <div className="relative">
-              <div className="absolute left-3 top-3 text-brand-muted-foreground">
-                <LockOutlined />
-              </div>
-              <Input
-                type="password"
-                placeholder="Must be at least 8 characters"
-                className="pl-10"
-                required
-                minLength={8}
-              />
-            </div>
+            <Input
+              type="password"
+              placeholder="Must be at least 8 characters"
+              prefixIcon={<LockOutlined />}
+              required
+              minLength={8}
+            />
           </div>
           
           <Button 
-            type="submit" 
+            htmlType="submit" 
             className="w-full" 
             size="lg"
             loading={loading}

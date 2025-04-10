@@ -298,18 +298,8 @@ export function Dashboard() {
                     <div className="w-4 h-4 border-2 border-brand-border rounded-full"></div>
                   </div>
                 </div>
-                <div className="p-4 rounded-lg border border-brand-border flex items-center justify-between opacity-50">
-                  <div className="flex items-center">
-                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">B</div>
-                    <span className="ml-3">BONK</span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="text-brand-muted-foreground mr-2">Disabled</span>
-                    <div className="w-4 h-4 border-2 border-brand-border rounded-full"></div>
-                  </div>
-                </div>
-
-                <Button variant="outline" className="w-full">+ Add Token</Button>
+                {/* TODO: enable feature later */}
+                {/* <Button variant="outline" className="w-full">+ Add Token</Button> */}
               </div>
             </div>
           </motion.div>

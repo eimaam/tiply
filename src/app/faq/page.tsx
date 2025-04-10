@@ -79,6 +79,7 @@ const faqCategories = [
 
 export function FAQPage() {
   return (
+    
     <div className="min-h-screen bg-brand-background">
       <Navbar />
       
