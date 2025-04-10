@@ -51,7 +51,7 @@ export function Hero() {
           
           <motion.div 
             variants={item}
-            className="mt-10 flex items-center justify-center gap-x-6"
+            className="mt-10 flex flex-col md:flex-row gap-4 items-center justify-center gap-x-6"
           >
             <Link to="/signup">
               <Button size="lg">Start Tipping</Button>
