@@ -22,6 +22,7 @@ import { TipPage } from '@/pages/tip'
 // Page components
 import { FAQPage } from '@/pages/faq'
 import { ContactPage } from '@/pages/contact'
+import AboutUsPage from '@/pages/about'
 
 // Layout components
 const LandingPage = () => (
@@ -53,6 +54,7 @@ function App() {
         <Route path="/t/:username" element={<TipPage />} />
         <Route path="/faq" element={<FAQPage />} />
         <Route path="/contact" element={<ContactPage />} />
+        <Route path="/about" element={<AboutUsPage />} />
           
         {/* Auth routes */}
         <Route path="/login" element={
