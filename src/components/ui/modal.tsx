@@ -24,12 +24,16 @@ const modalVariants = cva(
   }
 )
 
-export interface ModalProps extends AntModalProps, VariantProps<typeof modalVariants> {
+// Extract variant properties to avoid naming conflicts
+type ModalVariantProps = VariantProps<typeof modalVariants>;
+
+export interface ModalProps extends Omit<AntModalProps, "size"> {
   containerClassName?: string;
   headerClassName?: string;
   bodyClassName?: string;
   footerClassName?: string;
   closable?: boolean;
+  size?: ModalVariantProps["size"];
 }
 
 function Modal({

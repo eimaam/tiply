@@ -4,16 +4,16 @@ import { Button as AntButton, ButtonProps as AntButtonProps } from "antd"
 import { cva, type VariantProps } from "class-variance-authority"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus:!outline-none focus:ring-2 focus:ring-brand-accent focus:ring-offset-2 gap-2  focus:ring-2 focus:ring-brand-accent focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus:!outline-none focus:ring-2 focus:ring-brand-accent focus:ring-offset-2 gap-2  focus:ring-2 focus:ring-brand-accent focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:!text-brand-foreground",
   {
     variants: {
       variant: {
-        default: "!bg-brand-primary text-brand-primary-foreground hover:bg-brand-accent",
-        outline: "border border-brand-border bg-transparent hover:bg-brand-surface text-brand-foreground",
-        ghost: "bg-transparent hover:bg-brand-surface text-brand-foreground",
-        destructive: "bg-red-600 text-white hover:bg-red-700",
+        default: "!bg-brand-primary !text-brand-primary-foreground hover:bg-brand-accent",
+        outline: "!border !border-brand-border !bg-transparent hover:bg-brand-surface !text-brand-foreground",
+        ghost: "!bg-transparent hover:bg-brand-surface text-brand-foreground",
+        destructive: "!bg-red-600 text-white hover:bg-red-700",
         link: "underline-offset-4 hover:underline text-brand-accent bg-transparent",
-        secondary: "bg-brand-secondary text-brand-secondary-foreground hover:bg-brand-secondary/80",
+        secondary: "!bg-brand-secondary text-brand-secondary-foreground hover:bg-brand-secondary/80",
       },
       size: {
         sm: "h-8 px-3 text-xs",
@@ -41,9 +41,17 @@ const buttonVariants = cva(
   }
 )
 
+// Extract variant properties to avoid naming conflicts
+type ButtonVariantProps = VariantProps<typeof buttonVariants>;
+
+// Create a custom ButtonProps type that extends Ant Design's ButtonProps
+// but omits properties that conflict with our variant props
 interface ButtonProps
-  extends Omit<AntButtonProps, "size" | "type">,
-    VariantProps<typeof buttonVariants> {
+  extends Omit<AntButtonProps, "size" | "type" | "variant"> {
+  variant?: ButtonVariantProps["variant"];
+  size?: ButtonVariantProps["size"];
+  fullWidth?: ButtonVariantProps["fullWidth"];
+  rounded?: ButtonVariantProps["rounded"];
   loading?: boolean;
   icon?: React.ReactNode;
   suffix?: React.ReactNode;
@@ -98,3 +106,6 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 Button.displayName = "Button"
 
 export { Button, buttonVariants }
+
+
+

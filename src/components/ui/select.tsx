@@ -33,13 +33,18 @@ const selectVariants = cva(
   }
 )
 
+// Extract variant properties to avoid naming conflicts
+type SelectVariantProps = VariantProps<typeof selectVariants>;
+
 export interface SelectProps<T = any>
-  extends Omit<AntSelectProps<T>, "size" | "options">,
-  VariantProps<typeof selectVariants> {
+  extends Omit<AntSelectProps<T>, "size" | "options" | "variant"> {
   label?: string;
   error?: string;
   helperText?: string;
   containerClassName?: string;
+  variant?: SelectVariantProps["variant"];
+  size?: SelectVariantProps["size"];
+  rounded?: SelectVariantProps["rounded"];
   options?: {
     label: React.ReactNode;
     value: T;

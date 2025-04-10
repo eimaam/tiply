@@ -1,7 +1,7 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
-import { Input as AntInput, InputProps as AntInputProps } from "antd"
+import { Input as AntInput, InputProps as AntInputProps, InputRef } from "antd"
 import { cva, type VariantProps } from "class-variance-authority"
 
 const inputVariants = cva(
@@ -33,18 +33,23 @@ const inputVariants = cva(
   }
 )
 
+// Extract variant properties to avoid naming conflicts
+type InputVariantProps = VariantProps<typeof inputVariants>;
+
 export interface InputProps
-  extends Omit<AntInputProps, "size">,
-  VariantProps<typeof inputVariants> {
+  extends Omit<AntInputProps, "size" | "variant"> {
   label?: string;
   error?: string;
   helperText?: string;
   prefixIcon?: React.ReactNode;
   suffixIcon?: React.ReactNode;
   containerClassName?: string;
+  variant?: InputVariantProps["variant"];
+  size?: InputVariantProps["size"];
+  rounded?: InputVariantProps["rounded"];
 }
 
-const Input = React.forwardRef<HTMLInputElement, InputProps>(
+const Input = React.forwardRef<InputRef, InputProps>(
   ({ 
     className, 
     type, 

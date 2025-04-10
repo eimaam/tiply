@@ -35,13 +35,19 @@ const textareaVariants = cva(
   }
 )
 
+// Extract variant properties to avoid naming conflicts
+type TextareaVariantProps = VariantProps<typeof textareaVariants>;
+
 export interface TextareaProps
-  extends Omit<AntTextAreaProps, "size">,
-  VariantProps<typeof textareaVariants> {
+  extends Omit<AntTextAreaProps, "size" | "variant"> {
   label?: string;
   error?: string;
   helperText?: string;
   containerClassName?: string;
+  variant?: TextareaVariantProps["variant"];
+  size?: TextareaVariantProps["size"];
+  rounded?: TextareaVariantProps["rounded"];
+  resize?: "none" | "both" | "horizontal" | "vertical";
 }
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
