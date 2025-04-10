@@ -166,7 +166,7 @@ export function TipPage() {
                     {suggestedAmounts.map(amt => (
                       <Button 
                         key={amt}
-                        type="button"
+                        htmlType="button"
                         variant={parseFloat(amount) === amt ? "default" : "outline"}
                         size="sm"
                         onClick={() => selectSuggestedAmount(amt)}
@@ -191,12 +191,11 @@ export function TipPage() {
 
               <motion.div variants={itemVariants}>
                 <Button 
-                  type="submit" 
+                  htmlType="submit" 
                   className="w-full relative group" 
                   size="lg" 
                   loading={loading}
                   disabled={loading || !amount}
-                  htmlType="submit"
                 >
                   <span className="flex items-center">
                     {loading ? "Processing..." : (

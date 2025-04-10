@@ -36,7 +36,7 @@ const selectVariants = cva(
 // Extract variant properties to avoid naming conflicts
 type SelectVariantProps = VariantProps<typeof selectVariants>;
 
-export interface SelectProps<T = any>
+export interface SelectProps<T extends string | number | null | undefined = any>
   extends Omit<AntSelectProps<T>, "size" | "options" | "variant"> {
   label?: string;
   error?: string;
@@ -54,7 +54,7 @@ export interface SelectProps<T = any>
   }[];
 }
 
-function Select<T = any>({
+function Select<T extends string | number | null | undefined = any>({
   className,
   label,
   variant,
