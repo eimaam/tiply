@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { motion } from 'framer-motion'
 import { smoothScrollTo } from '@/lib/utils'
+import PoweredBySolanaIllustration from '@/assets/images/illustrations/powered-by-solana'
 
 const container = {
   hidden: { opacity: 0 },
@@ -46,7 +47,7 @@ export function Hero() {
             variants={item}
             className="mx-auto mt-6 max-w-2xl text-lg text-brand-muted-foreground"
           >
-            Empower your audience to support you in seconds. Built on Solana. Paid in USDC.
+            Empower your audience to support you in seconds. Built on Solana. Paid in <b>USDC.</b>
           </motion.p>
           
           <motion.div 
@@ -63,6 +64,20 @@ export function Hero() {
             >
               Learn More
             </Button>
+          </motion.div>
+          
+          <motion.div
+            variants={item}
+            className="mt-16 flex justify-center"
+          >
+            <a 
+              href="https://solana.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="transition-transform hover:scale-105"
+            >
+              <PoweredBySolanaIllustration />
+            </a>
           </motion.div>
         </motion.div>
       </div>

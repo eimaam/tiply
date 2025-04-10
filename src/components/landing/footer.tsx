@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { PROJECT_INFO, smoothScrollTo } from '@/lib/utils'
 import logo from '@/assets/images/tipp-link-logo.png'
+import PoweredBySolanaIllustration from '@/assets/images/illustrations/powered-by-solana'
 
 const navigation = {
   main: [
@@ -93,6 +94,17 @@ export function Footer() {
             </a>
           ))}
           <ThemeToggle />
+        </div>
+
+        <div className="mt-10 flex justify-center">
+          <a 
+            href="https://solana.com" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="transition-transform hover:scale-105"
+          >
+            <PoweredBySolanaIllustration />
+          </a>
         </div>
 
         <p className="mt-8 text-center text-xs leading-5 text-brand-muted-foreground">
