@@ -20,8 +20,8 @@ import { Dashboard } from '@/pages/dashboard'
 import { TipPage } from '@/pages/tip'
 
 // Page components
-import { FAQPage } from '@/app/faq/page'
-import { ContactPage } from '@/app/contact/page'
+import { FAQPage } from '@/pages/faq'
+import { ContactPage } from '@/pages/contact'
 
 // Layout components
 const LandingPage = () => (
