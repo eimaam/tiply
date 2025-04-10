@@ -46,7 +46,7 @@ export function HowItWorks() {
           viewport={{ once: true }}
         >
           <h2 className="text-3xl font-bold tracking-tight text-brand-foreground sm:text-4xl">
-            How It Works
+            How It Works 🛠️
           </h2>
           <p className="mt-6 text-lg leading-8 text-brand-muted-foreground">
             Start accepting tips in three simple steps
@@ -71,7 +71,10 @@ export function HowItWorks() {
                   <step.icon className="h-8 w-8" />
                 </div>
                 <h3 className="mt-6 text-xl font-semibold text-brand-foreground">
-                  {step.title}
+                  {index === 0 ? `${step.title} 🔗` : 
+                   index === 1 ? `${step.title} 📱` : 
+                   index === 2 ? `${step.title} 💸` : 
+                   step.title}
                 </h3>
                 <p className="mt-2 text-brand-muted-foreground">
                   {step.description}

@@ -62,7 +62,7 @@ export function Features() {
           viewport={{ once: true }}
         >
           <h2 className="text-3xl font-bold tracking-tight text-brand-foreground sm:text-4xl">
-            Everything you need to start accepting tips
+            Everything you need to start accepting tips ✨
           </h2>
           <p className="mt-6 text-lg leading-8 text-brand-muted-foreground">
             Simple, fast, and secure. Start receiving support from your audience today.
@@ -85,7 +85,12 @@ export function Features() {
               >
                 <dt className="flex items-center gap-x-3 text-base font-semibold leading-7 text-brand-foreground">
                   <feature.icon className="h-5 w-5 flex-none text-brand-primary" />
-                  {feature.name}
+                  {feature.name === 'No-login tipping' ? `${feature.name} 🔓` : 
+                   feature.name === 'Platform fee only 1%' ? `${feature.name} 🤑` : 
+                   feature.name === 'Optional tip notes' ? `${feature.name} 💬` : 
+                   feature.name === 'Social preview support' ? `${feature.name} 🚀` : 
+                   feature.name === 'Premium analytics' ? `${feature.name} 📊` : 
+                   feature.name}
                 </dt>
                 <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-brand-muted-foreground">
                   <p className="flex-auto">{feature.description}</p>

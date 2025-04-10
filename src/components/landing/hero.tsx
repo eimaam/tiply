@@ -39,15 +39,15 @@ export function Hero() {
             variants={item}
             className="text-4xl font-bold tracking-tight text-brand-foreground sm:text-6xl"
           >
-            Send Tips. No Logins.
-            <span className="text-brand-primary"> Just a Link.</span>
+            <span className="text-brand-primary">Support Creators</span> or <span className="text-brand-primary">Get Tipped</span> — Instantly ⚡
           </motion.h1>
           
           <motion.p 
             variants={item}
             className="mx-auto mt-6 max-w-2xl text-lg text-brand-muted-foreground"
           >
-            Empower your audience to support you in seconds. Built on Solana. Paid in <b>USDC.</b>
+            Just a link. No logins. Creators get paid in <b>USDC</b> 💰. Supporters give effortlessly. 
+            <span className="block mt-2">It's tipping without the friction — powered by Solana.</span>
           </motion.p>
           
           <motion.div 
@@ -55,14 +55,14 @@ export function Hero() {
             className="mt-10 flex flex-col md:flex-row gap-4 items-center justify-center gap-x-6"
           >
             <Link to="/signup">
-              <Button size="lg">Start Tipping</Button>
+              <Button size="lg">Create Your TippLink</Button>
             </Link>
             <Button 
               variant="outline" 
               size="lg" 
               onClick={scrollToHowItWorks}
             >
-              Learn More
+              See How It Works
             </Button>
           </motion.div>
           

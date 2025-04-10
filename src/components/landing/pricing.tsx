@@ -42,7 +42,7 @@ export function Pricing() {
           viewport={{ once: true }}
         >
           <h2 className="text-3xl font-bold tracking-tight text-brand-foreground sm:text-4xl">
-            Simple, transparent pricing
+            Simple, transparent pricing 💎
           </h2>
           <p className="mt-6 text-lg leading-8 text-brand-muted-foreground">
             Choose the plan that works best for you
@@ -63,7 +63,7 @@ export function Pricing() {
               <div>
                 <div className="flex items-center justify-between gap-x-4">
                   <h3 className="text-lg font-semibold leading-8 text-brand-foreground">
-                    {plan.name}
+                    {plan.name === 'Free' ? `${plan.name} 🌱` : `${plan.name} ⭐️`}
                   </h3>
                 </div>
                 <p className="mt-4 text-sm leading-6 text-brand-muted-foreground">
