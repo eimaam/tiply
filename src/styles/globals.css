@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Base theme settings */
+  :root {
+    --radius: 0.5rem;
+  }
+  
+  /* Base styles with transitions */
+  body {
+    transition-property: background-color, color, border-color;
+    transition-duration: 200ms;
+    @apply bg-brand-background text-brand-foreground;
+  }
+  
+  * {
+    @apply border-border;
+  }
+}
+
+/* Dark theme styles (default) */
+html.dark body,
+body.dark {
+  background-color: theme('colors.brand.background');
+  color: theme('colors.brand.foreground');
+}
+
+/* Light theme styles */
+html.light body,
+body.light {
+  background-color: theme('colors.brand.light.background');
+  color: theme('colors.brand.light.foreground');
+}
+
+/* Component-specific light mode overrides */
+@layer components {
+  .light .bg-background,
+  .light .bg-brand-background {
+    @apply bg-white;
+  }
+  
+  .light .text-foreground,
+  .light .text-brand-foreground {
+    @apply text-[#5F6C72];
+  }
+  
+  .light .bg-brand-primary,
+  .light .bg-primary {
+    background-color: theme('colors.brand.light.primary');
+  }
+  
+  .light .text-brand-primary,
+  .light .text-primary {
+    color: theme('colors.brand.light.primary');
+  }
+  
+  .light .bg-brand-secondary,
+  .light .bg-secondary {
+    background-color: theme('colors.brand.light.secondary');
+  }
+  
+  .light .text-brand-secondary,
+  .light .text-secondary {
+    color: theme('colors.brand.light.secondary-foreground');
+  }
+  
+  .light .bg-brand-surface,
+  .light .bg-surface {
+    background-color: theme('colors.brand.light.surface');
+  }
+  
+  .light .text-brand-muted-foreground,
+  .light .text-muted-foreground {
+    color: theme('colors.brand.light.muted-foreground');
+  }
+  
+  .light .border,
+  .light .border-brand-border {
+    border-color: theme('colors.brand.light.border');
+  }
+}

@@ -12,50 +12,76 @@ const config: Config = {
         spaceGrotesk: ['"Space Grotesk"', 'sans-serif'],
       },
       colors: {
-        // Main colors from your current HSL values
+        // Dark mode colors (default)
         background: '#0c0a09', 
-        foreground: '#fafafa',
+        foreground: '#ffffff',
         
-        // Brand namespace for backward compatibility
+        // Brand namespace for components
         brand: {
+          // Dark mode colors
           background: '#0c0a09',
-          foreground: '#fafafa',
+          foreground: '#ffffff',
           primary: '#a78bfa',
           'primary-foreground': '#fafafa',
           secondary: '#27272a',
-          'secondary-foreground': '#fafafa',
+          'secondary-foreground': '#ffffff',
           accent: '#a78bfa',
-          'accent-foreground': '#fafafa',
+          'accent-foreground': '#ffffff',
           muted: '#27272a',
           'muted-foreground': '#a1a1aa',
           border: '#27272a',
-          surface: '#0c0a09',
+          surface: '#121214',
+          
+          // Light mode colors - will be applied via CSS
+          light: {
+            background: '#ffffff',
+            foreground: '#5F6C72',
+            primary: '#a78bfa',
+            'primary-foreground': '#ffffff',
+            secondary: '#f5f5f7',
+            'secondary-foreground': '#111827',
+            accent: '#a78bfa',
+            'accent-foreground': '#ffffff',
+            muted: '#f5f5f7',
+            'muted-foreground': '#6b7280',
+            border: '#e5e7eb',
+            surface: '#ffffff',
+          }
         },
         
         // Direct color access without "brand" namespace
         primary: {
           DEFAULT: '#a78bfa',
-          foreground: '#fafafa',
+          foreground: '#ffffff',
+          light: '#a78bfa',
         },
         secondary: {
           DEFAULT: '#27272a',
-          foreground: '#fafafa',
+          foreground: '#ffffff',
+          light: '#f5f5f7',
         },
         accent: {
           DEFAULT: '#a78bfa',
-          foreground: '#fafafa',
+          foreground: '#ffffff',
         },
         muted: {
           DEFAULT: '#27272a',
           foreground: '#a1a1aa',
+          light: '#f5f5f7',
         },
-        border: '#27272a',
-        surface: '#0c0a09',
+        border: {
+          DEFAULT: '#27272a',
+          light: '#e5e7eb',
+        },
+        surface: {
+          DEFAULT: '#121214',
+          light: '#ffffff',
+        },
       },
       borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
+        lg: '0.5rem',
+        md: 'calc(0.5rem - 2px)',
+        sm: 'calc(0.5rem - 4px)',
       },
     },
   },
