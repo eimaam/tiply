@@ -32,6 +32,6 @@ export const PROJECT_INFO = {
   url: "https://tiplink.xyz",
   image: "https://tiplink.xyz/logo.png",
   twitterUrl: "https://twitter.com/tipplink",
-  repoUrl: "https://github.com/eimaam/tiplink",
+  repoUrl: "https://github.com/eimaam/tipplink",
   supportEmail: "support@tipplink.xyz"
 }

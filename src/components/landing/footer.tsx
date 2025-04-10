@@ -93,7 +93,7 @@ export function Footer() {
               <item.icon className="h-6 w-6" aria-hidden="true" />
             </a>
           ))}
-          <ThemeToggle />
+          {/* <ThemeToggle /> */}
         </div>
 
         <div className="mt-10 flex justify-center">

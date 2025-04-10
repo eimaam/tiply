@@ -7,11 +7,23 @@ import { smoothScrollTo } from '@/lib/utils'
 import { MenuOutlined, CloseOutlined } from '@ant-design/icons'
 import logo from '@/assets/images/tipp-link-logo.png'
 
-const navLinks = [
-  { href: '#how-it-works', label: 'How it works' },
-  { href: '#features', label: 'Features' },
-  { href: '#pricing', label: 'Pricing' },
-  { href: '#faq', label: 'FAQ' },
+// Define all navigation links in one place
+type NavLink = {
+  label: string;
+  type: 'hash' | 'route';
+  href: string;
+  className?: string;
+}
+
+const navigationLinks: NavLink[] = [
+  { type: 'hash', href: '#how-it-works', label: 'How it works' },
+  { type: 'hash', href: '#features', label: 'Features' },
+  { type: 'hash', href: '#pricing', label: 'Pricing' },
+  { type: 'hash', href: '#faq', label: 'FAQ' },
+  // { type: 'route', href: '/t/demo', label: 'Start Tipping', className: 'text-lg' },
+  { type: 'route', href: '/about', label: 'About' },
+  { type: 'route', href: '/contact', label: 'Contact' },
+  { type: 'route', href: '/faq', label: 'FAQ' },
 ]
 
 export function Navbar() {
@@ -23,7 +35,7 @@ export function Navbar() {
     setMobileMenuOpen(false); 
   };
 
-  // Handle clicks outside the mobile menu to close it
+  // Handle clicks outside mobile menu to close it
   const menuRef = React.useRef<HTMLDivElement>(null);
   
   React.useEffect(() => {
@@ -49,6 +61,42 @@ export function Navbar() {
     };
   }, [mobileMenuOpen]);
 
+  // render appropriate link based on type
+  const renderNavLink = (link: NavLink, isMobile: boolean = false) => {
+    const baseClassName = isMobile
+      ? `${link.className || 'text-base'} font-medium py-2 text-brand-foreground hover:text-brand-primary`
+      : 'text-sm text-brand-foreground hover:text-brand-primary transition-colors';
+
+    if (link.type === 'hash') {
+      return (
+        <a
+          key={link.href}
+          href={link.href}
+          onClick={(e) => handleSmoothScroll(e, link.href)}
+          className={baseClassName}
+        >
+          {link.label}
+        </a>
+      );
+    } else {
+      return (
+        <Link
+          key={link.href}
+          to={link.href}
+          className={baseClassName}
+          onClick={() => isMobile && setMobileMenuOpen(false)}
+        >
+          {link.label}
+        </Link>
+      );
+    }
+  };
+
+  // Filter links for desktop (excluding duplicate FAQ link)
+  const desktopLinks = navigationLinks.filter(link => 
+    !(link.type === 'route' && link.href === '/faq')
+  );
+
   return (
     <motion.nav 
       className="sticky top-0 z-50 w-full border-b border-brand-border bg-brand-background/80 backdrop-blur-sm"
@@ -66,28 +114,7 @@ export function Navbar() {
         
         {/* Desktop Nav */}
         <div className="hidden md:flex md:items-center md:space-x-6">
-          {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              onClick={(e) => handleSmoothScroll(e, link.href)}
-              className="text-sm text-brand-foreground hover:text-brand-primary transition-colors"
-            >
-              {link.label}
-            </a>
-          ))}
-          <Link
-            to="/t/demo"
-            className="text-sm text-brand-foreground hover:text-brand-primary transition-colors"
-          >
-            Start Tipping
-          </Link>
-          <Link
-            to="/contact"
-            className="text-sm text-brand-foreground hover:text-brand-primary transition-colors"
-          >
-            Contact
-          </Link>
+          {desktopLinks.map(link => renderNavLink(link))}
         </div>
         
         {/* Right side items (theme toggle and signup button) */}
@@ -127,38 +154,8 @@ export function Navbar() {
             transition={{ duration: 0.3, ease: "easeInOut" }}
           >
             <div className="flex flex-col space-y-4 p-6 border-t border-brand-border">
-              {/* Mobile Nav Links */}
-              {navLinks.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  onClick={(e) => handleSmoothScroll(e, link.href)}
-                  className="text-base font-medium py-2 text-brand-foreground hover:text-brand-primary"
-                >
-                  {link.label}
-                </a>
-              ))}
-              <Link
-                to="/t/demo"
-                className="text-lg font-medium py-2 text-brand-foreground hover:text-brand-primary"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Start Tipping
-              </Link>
-              <Link
-                to="/contact"
-                className="text-base font-medium py-2 text-brand-foreground hover:text-brand-primary"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Contact
-              </Link>
-              <Link
-                to="/faq"
-                className="text-base font-medium py-2 text-brand-foreground hover:text-brand-primary"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                FAQ
-              </Link>
+              {/* Render all mobile nav links */}
+              {navigationLinks.map(link => renderNavLink(link, true))}
               
               {/* Get Started CTA for mobile */}
               <div className="pt-4 mt-4 border-t border-brand-border">
