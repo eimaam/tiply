@@ -48,8 +48,7 @@ export function Onboarding() {
     bannerImage: '',
     
     // Customize step
-    defaultToken: 'USDC',
-    tipAmounts: [1, 5, 10, 25],
+    tipAmounts: [],
     allowCustomAmounts: true,
     receiveNotes: true,
     minimumTipAmount: 1,
@@ -78,15 +77,18 @@ export function Onboarding() {
     }))
   }
 
+  React.useEffect(() => {
+    validateCurrentStep(currentStep);
+  }, [currentStep]);
+
   const handleNextStep = () => {
     if (currentStep < steps.length - 1) {
-      setCurrentStep(prev => prev + 1)
-      setIsStepValid(false) // Reset validation for new step
+      setCurrentStep(prev => prev + 1);
     } else {
-      completeSetup()
+      completeSetup();
     }
-  }
-  
+  };
+
   const handlePreviousStep = () => {
     if (currentStep > 0) {
       setCurrentStep(prev => prev - 1)
@@ -98,6 +100,7 @@ export function Onboarding() {
   
   // Validate the current step based on its index
   const validateCurrentStep = (stepIndex: number) => {
+    console.log("Validating current step ==>", stepIndex)
     const step = steps[stepIndex].id
     
     switch (step) {
@@ -335,7 +338,6 @@ export function Onboarding() {
             {/* Step 5: Customize Settings */}
             {currentStep === 4 && (
               <CustomizeStep 
-                defaultToken={onboardingData.defaultToken}
                 tipAmounts={onboardingData.tipAmounts}
                 allowCustomAmounts={onboardingData.allowCustomAmounts}
                 receiveNotes={onboardingData.receiveNotes}
@@ -454,6 +456,40 @@ export function Onboarding() {
                     </div>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* Step 7: TippLink Ready */}
+            {currentStep === 6 && (
+              <div className="text-center space-y-6">
+                <h2 className="text-3xl font-bold">Your TippLink is Ready! 🎉</h2>
+                <p className="text-lg text-brand-muted-foreground">Start receiving tips now</p>
+
+                <div className="bg-brand-surface/80 backdrop-blur-sm px-4 py-3 rounded-lg border border-brand-border flex items-center justify-center">
+                  <span className="text-brand-primary font-medium">tipplink.xyz/@</span>
+                  <span className="font-bold">{onboardingData.username}</span>
+                </div>
+
+                <div className="flex flex-wrap gap-3 justify-center">
+                  <Button variant="outline" className="flex gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                      <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
+                      <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
+                    </svg>
+                    Copy Link
+                  </Button>
+                  <Button variant="outline" className="flex gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                      <path d="M5.026 15c6.038 0 9.341-5.003 9.341-9.334 0-.14 0-.282-.006-.422A6.685 6.685 0 0 0 16 3.542a6.658 6.658 0 0 1-1.889.518 3.301 3.301 0 0 0 1.447-1.817 6.533 6.533 0 0 1-2.087.793A3.286 3.286 0 0 0 7.875 6.03a9.325 9.325 0 0 1-6.767-3.429 3.289 3.289 0 0 0 1.018 4.382A3.323 3.323 0 0 1 .64 6.575v.045a3.288 3.288 0 0 0 2.632 3.218 3.203 3.203 0 0 1-.865.115 3.23 3.23 0 0 1-.614-.057 3.283 3.283 0 0 0 3.067 2.277A6.588 6.588 0 0 1 .78 13.58a6.32 6.32 0 0 1-.78-.045A9.344 9.344 0 0 0 5.026 15z"/>
+                    </svg>
+                    Share on X
+                  </Button>
+                  <Button className="bg-gradient-to-r from-brand-primary to-brand-accent">
+                    Go to Dashboard
+                  </Button>
+                </div>
+
+                <p className="text-sm text-brand-muted-foreground">Taking you to your dashboard...</p>
               </div>
             )}
           </motion.div>

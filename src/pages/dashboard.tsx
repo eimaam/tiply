@@ -13,6 +13,7 @@ import {
   ClockCircleOutlined,
   CheckCircleOutlined
 } from '@ant-design/icons'
+import { SidebarNav } from '@/components/ui/sidebar-nav'
 
 // Dummy data for recent tips
 const recentTips = [
@@ -96,40 +97,8 @@ export function Dashboard() {
 
   return (
     <div className="min-h-screen bg-brand-background">
-      {/* Dashboard Header */}
-      <header className="border-b border-brand-border bg-brand-surface sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-brand-primary">TipLink</h1>
-          
-          <nav className="flex items-center space-x-1">
-            <Button 
-              variant={activeTab === 'dashboard' ? 'default' : 'ghost'} 
-              onClick={() => setActiveTab('dashboard')}
-            >
-              Dashboard
-            </Button>
-            <Button 
-              variant={activeTab === 'analytics' ? 'default' : 'ghost'} 
-              onClick={() => setActiveTab('analytics')}
-            >
-              Analytics
-            </Button>
-            <Button 
-              variant={activeTab === 'settings' ? 'default' : 'ghost'} 
-              onClick={() => setActiveTab('settings')}
-            >
-              Settings
-            </Button>
-            <Button 
-              variant="outline"
-              className="ml-4"
-              size="sm"
-            >
-              <UserOutlined className="mr-1" /> johndoe.eth
-            </Button>
-          </nav>
-        </div>
-      </header>
+      {/* Replace the LoggedInNav with our new SidebarNav */}
+      <SidebarNav username="johndoe.eth" />
 
       <motion.div 
         className="container mx-auto px-4 py-8"
