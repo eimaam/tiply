@@ -16,6 +16,7 @@ import {
 import { LoggedInNav } from '@/components/ui/logged-in-nav';
 import { SidebarNav } from '@/components/ui/sidebar-nav';
 import { Select } from '@/components/ui/select';
+import { OnboardingHeading } from '@/components/onboarding/OnboardingHeading';
 
 // Animation variants
 const containerVariants = {
@@ -50,7 +51,7 @@ const EditProfile = () => {
     notificationTelegram: '',
   });
 
-  const handleChange = (field, value) => {
+  const handleChange = (field:string, value: any) => {
     setProfileData((prev) => ({
       ...prev,
       [field]: value,
@@ -64,7 +65,7 @@ const EditProfile = () => {
 
   return (
     <div className="max-w-4xl mx-auto py-10 space-y-8">
-      <OnboardingHeading 
+      <OnboardingHeading
         title="Edit Your Profile" 
         subtitle="Update your profile and preferences." 
       />

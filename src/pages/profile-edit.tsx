@@ -52,7 +52,7 @@ const EditProfile = () => {
     notificationTelegram: '',
   });
 
-  const handleChange = (field, value) => {
+  const handleChange = (field:string, value:any) => {
     setProfileData((prev) => ({
       ...prev,
       [field]: value,
@@ -73,7 +73,7 @@ const EditProfile = () => {
     setTimeout(() => setSaved(false), 3000);
   };
 
-  const handleTipAmountChange = (amount) => {
+  const handleTipAmountChange = (amount:number) => {
     // Add or remove amount from tipAmounts
     const updatedAmounts = [...profileData.tipAmounts];
     const index = updatedAmounts.indexOf(amount);

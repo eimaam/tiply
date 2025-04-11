@@ -47,7 +47,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
 
   // Close sidebar when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    const handleClickOutside = (event: any) => {
       const sidebar = document.getElementById('sidebar');
       const menuButton = document.getElementById('menu-button');
       

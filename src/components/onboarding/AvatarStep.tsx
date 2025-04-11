@@ -124,7 +124,7 @@ export function AvatarStep({
                 className="hidden"
               />
               <Button
-                type="button"
+                htmlType="button"
                 variant="outline"
                 onClick={handleFileUploadClick}
                 className="w-full border-dashed border-2"
@@ -136,7 +136,7 @@ export function AvatarStep({
             {/* Import from Twitter/X */}
             <div className="text-center">
               <Button
-                type="button"
+                htmlType="button"
                 variant="ghost"
                 onClick={handleImportFromTwitter}
                 className="w-full"
