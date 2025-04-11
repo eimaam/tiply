@@ -45,7 +45,7 @@ const buttonVariants = cva(
 type ButtonVariantProps = VariantProps<typeof buttonVariants>;
 
 // Create a custom ButtonProps type that extends Ant Design's ButtonProps
-// but omits properties that conflict with our variant props
+// but omits properties that conflict with variant props
 interface ButtonProps
   extends Omit<AntButtonProps, "size" | "type" | "variant"> {
   variant?: ButtonVariantProps["variant"];
@@ -72,7 +72,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     children, 
     ...props 
   }, ref) => {
-    // Map our size variants to Ant Design's size options
+
+    // Map size variants to Ant Design's size options
     const antSize = size === "sm" ? "small" : size === "lg" ? "large" : "middle";
     
     return (

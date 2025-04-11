@@ -23,6 +23,8 @@ import { TipPage } from '@/pages/tip'
 import { FAQPage } from '@/pages/faq'
 import { ContactPage } from '@/pages/contact'
 import AboutUsPage from '@/pages/about'
+import ProfilePage from '@/pages/profile'
+import EditProfile from '@/pages/profile-edit'
 
 // Layout components
 const LandingPage = () => (
@@ -76,6 +78,10 @@ function App() {
         {/* Protected routes - would include auth check in real app */}
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/dashboard/*" element={<Dashboard />} />
+        
+        {/* Profile routes */}
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/profile/edit" element={<EditProfile />} />
 
         {/* Fallback route */}
         <Route path="*" element={<LandingPage />} />
