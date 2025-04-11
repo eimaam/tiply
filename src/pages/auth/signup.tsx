@@ -1,14 +1,14 @@
-import * as React from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { WalletOutlined, LockOutlined, MailOutlined, UserOutlined } from '@ant-design/icons'
+import { useState } from 'react'
 
 export function SignUp() {
   const navigate = useNavigate()
-  const [loading, setLoading] = React.useState(false)
-  const [connectingWallet, setConnectingWallet] = React.useState(false)
+  const [loading, setLoading] = useState<boolean>(false)
+  const [connectingWallet, setConnectingWallet] = useState<boolean>(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -88,19 +88,6 @@ export function SignUp() {
           onSubmit={handleSubmit} 
           className="space-y-4"
         >
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Username</label>
-            <Input 
-              type="text"
-              placeholder="yourname"
-              prefixIcon={<UserOutlined />}
-              required
-            />
-            <p className="text-xs text-brand-muted-foreground">
-              This will be your TipLink URL: tiplink.io/<span className="text-brand-foreground">yourname</span>
-            </p>
-          </div>
-          
           <div className="space-y-2">
             <label className="text-sm font-medium">Email</label>
             <Input 
