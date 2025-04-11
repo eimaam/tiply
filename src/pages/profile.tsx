@@ -15,6 +15,7 @@ import {
 } from '@ant-design/icons';
 import { LoggedInNav } from '@/components/ui/logged-in-nav';
 import { SidebarNav } from '@/components/ui/sidebar-nav';
+import { Select } from '@/components/ui/select';
 
 // Animation variants
 const containerVariants = {
