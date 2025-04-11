@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+input,
+textarea,
+select {
+  font-size: 15px;
+}
+
+
 @layer base {
   :root {
     --radius: 0.5rem;
