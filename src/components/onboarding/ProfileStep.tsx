@@ -25,6 +25,18 @@ export function ProfileStep({
   // Check if we can continue to next step - only display name is required
   const canContinue = displayName.trim().length >= 2
 
+  const handleDisplayNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    onDisplayNameChange(value);
+  };
+
+  const handleBioChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    if (value.length <= 140) {
+      onBioChange(value);
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div>
@@ -45,7 +57,7 @@ export function ProfileStep({
             name="displayName"
             placeholder="Your name or brand"
             value={displayName}
-            onChange={(e) => onDisplayNameChange(e.target.value)}
+            onChange={handleDisplayNameChange}
             required
             className={!displayName.trim() ? 'border-red-500' : ''}
           />
@@ -68,7 +80,7 @@ export function ProfileStep({
             name="bio"
             placeholder="Tell others about yourself, your work, or your interests..."
             value={bio}
-            onChange={(e) => onBioChange(e.target.value)}
+            onChange={handleBioChange}
             rows={4}
             className="resize-none"
           />
@@ -77,7 +89,7 @@ export function ProfileStep({
               <InfoCircleOutlined className="text-brand-primary mt-0.5" />
               <span>A brief description about yourself that appears on your profile.</span>
             </div>
-            <span>{bio.length}/160</span>
+            <span>{bio.length}/140</span>
           </div>
         </div>
         
@@ -91,8 +103,6 @@ export function ProfileStep({
           </ul>
         </div>
       </div>
-      
-      {/* Removed navigation buttons */}
     </div>
   )
 }

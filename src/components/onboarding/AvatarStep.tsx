@@ -2,7 +2,7 @@ import * as React from 'react'
 import { motion } from 'framer-motion'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { LinkOutlined, CloudUploadOutlined, InfoCircleOutlined } from '@ant-design/icons'
+import { LinkOutlined, CloudUploadOutlined, InfoCircleOutlined, TwitterOutlined } from '@ant-design/icons'
 import { OnboardingHeading } from './OnboardingHeading'
 
 interface AvatarStepProps {
@@ -42,8 +42,7 @@ export function AvatarStep({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      // In a real implementation, you would upload this file to your server/storage
-      // Here we're just creating a temporary URL for preview purposes
+      
       const tempUrl = URL.createObjectURL(file)
       onProfileImageChange(tempUrl)
       setPreviewError(false)
@@ -53,6 +52,14 @@ export function AvatarStep({
   const handleImageError = () => {
     setPreviewError(true)
   }
+
+  const handleImportFromTwitter = () => {
+    // Simulate importing from Twitter/X
+    setTimeout(() => {
+      const importedImage = 'https://example.com/twitter-avatar.jpg';
+      onProfileImageChange(importedImage);
+    }, 1000);
+  };
 
   return (
     <div className="space-y-8">
@@ -123,6 +130,18 @@ export function AvatarStep({
                 className="w-full border-dashed border-2"
               >
                 <CloudUploadOutlined className="mr-2" /> Upload from your device
+              </Button>
+            </div>
+            
+            {/* Import from Twitter/X */}
+            <div className="text-center">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={handleImportFromTwitter}
+                className="w-full"
+              >
+                <TwitterOutlined className="mr-2" /> Import from Twitter/X
               </Button>
             </div>
             

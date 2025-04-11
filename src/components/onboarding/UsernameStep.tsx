@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { InfoCircleOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons'
 import { OnboardingHeading } from './OnboardingHeading'
+import debounce from 'lodash.debounce'
 
 interface UsernameStepProps {
   username: string;
@@ -21,6 +22,27 @@ export function UsernameStep({
   const [isChecking, setIsChecking] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   
+  const debounceCheckUsername = React.useCallback(
+    debounce(async (value: string) => {
+      setIsChecking(true);
+      try {
+        // Simulate API call to check username availability
+        const response = await fetch(`/api/check-username?username=${value}`);
+        const { available } = await response.json();
+        if (!available) {
+          setError('This username is already taken. Please try another.');
+        } else {
+          setError(null);
+        }
+      } catch {
+        setError('An error occurred while checking username availability.');
+      } finally {
+        setIsChecking(false);
+      }
+    }, 500),
+    []
+  );
+
   // Check if username format is valid
   const isValidFormat = React.useMemo(() => {
     if (!username) return false
@@ -37,18 +59,7 @@ export function UsernameStep({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.toLowerCase()
     onUsernameChange(value, isValidFormat, isAvailable === true)
-    
-    // Reset availability state when username changes
-    if (isAvailable !== null) {
-      setIsAvailable(null)
-    }
-    
-    // Validate format
-    if (value && !isValidFormat) {
-      setError('Username must be 3-20 characters and only contain letters, numbers, and underscores')
-    } else {
-      setError(null)
-    }
+    debounceCheckUsername(value);
   }
   
   // Check username availability (simulated)
