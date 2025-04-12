@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { UserRole } from './types/user';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -25,6 +26,27 @@ export const smoothScrollTo = (targetId: string, offset = 80) => {
   return false;
 }
 
+/**
+ * Check if a user has access to a feature based on their role
+ * @param userRole The role of the current user
+ * @param requiredRole The minimum role required for access
+ * @returns Boolean indicating if the user has access
+ */
+export const hasRoleAccess = (
+  userRole: UserRole,
+  requiredRole: UserRole = UserRole.USER
+): boolean => {
+  // Define role hierarchy
+  const roleHierarchy = {
+    [UserRole.SUPER_ADMIN]: 4,
+    [UserRole.ADMIN]: 3,
+    [UserRole.CREATOR]: 2,
+    [UserRole.USER]: 1
+  };
+  
+  // User has access if their role has equal or higher privilege than the required role
+  return roleHierarchy[userRole] >= roleHierarchy[requiredRole];
+};
 
 export const PROJECT_INFO = {
   name: "TipLink",
