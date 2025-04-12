@@ -23,31 +23,23 @@ import {
   ModalBody, 
   ModalFooter 
 } from '@/components/ui/modal';
+import { NotificationTrigger } from '@/components/notifications';
+import { AdminNotification } from '@/components/notifications/NotificationTypes';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
   title: string;
 }
 
-interface Notification {
-  id: string;
-  type: 'info' | 'warning' | 'success' | 'error';
-  title: string;
-  message: string;
-  timestamp: string;
-  read: boolean;
-}
-
 export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
   // Mock notifications data
-  const [notifications, setNotifications] = useState<Notification[]>([
+  const [notifications, setNotifications] = useState<AdminNotification[]>([
     {
       id: '1',
       type: 'success',
@@ -128,38 +120,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => 
     );
   };
 
-  // Format timestamp to relative time
-  const formatRelativeTime = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.round(diffMs / 60000);
-    
-    if (diffMins < 60) {
-      return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
-    } else if (diffMins < 1440) {
-      const hours = Math.floor(diffMins / 60);
-      return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
-    } else {
-      const days = Math.floor(diffMins / 1440);
-      return `${days} day${days !== 1 ? 's' : ''} ago`;
-    }
-  };
-
-  // Get icon for notification type
-  const getNotificationIcon = (type: Notification['type']) => {
-    switch (type) {
-      case 'success':
-        return <div className="p-2 w-8 h-8 flex bg-green-100 text-green-600 rounded-full"><UserOutlined /></div>;
-      case 'warning':
-        return <div className="p-2 w-8 h-8 flex bg-yellow-100 text-yellow-600 rounded-full"><ClockCircleOutlined /></div>;
-      case 'error':
-        return <div className="p-2 w-8 h-8 flex bg-red-100 text-red-600 rounded-full"><CloseOutlined /></div>;
-      default:
-        return <div className="p-2 w-8 h-8 flex bg-blue-100 text-blue-600 rounded-full"><BellOutlined /></div>;
-    }
-  };
-
   // Animation variants
   const sidebarVariants = {
     expanded: { width: 240 },
@@ -174,27 +134,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => 
   const labelVariants = {
     expanded: { opacity: 1, display: 'block', transition: { delay: 0.1 } },
     collapsed: { opacity: 0, display: 'none', transition: { duration: 0.2 } }
-  };
-
-  const notificationPanelVariants = {
-    open: { 
-      opacity: 1, 
-      x: 0,
-      transition: { 
-        type: 'spring',
-        stiffness: 300,
-        damping: 30
-      }
-    },
-    closed: { 
-      opacity: 0, 
-      x: '100%',
-      transition: {
-        type: 'spring',
-        stiffness: 300,
-        damping: 30
-      }
-    }
   };
 
   return (
@@ -289,100 +228,16 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => 
                 <SearchOutlined className="absolute left-3 top-1/2 transform -translate-y-1/2 text-brand-muted-foreground" />
               </div>
               
-              {/* Notifications */}
-              <div className="relative">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="rounded-full relative"
-                  onClick={() => setShowNotifications(!showNotifications)}
-                >
-                  <BellOutlined />
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                      {unreadCount}
-                    </span>
-                  )}
-                </Button>
-                
-                {/* Notification Panel */}
-                <AnimatePresence>
-                  {showNotifications && (
-                    <motion.div
-                      initial="closed"
-                      animate="open"
-                      exit="closed"
-                      variants={notificationPanelVariants}
-                      className="absolute right-0 mt-2 w-80 max-h-[70vh] overflow-y-auto bg-brand-surface border border-brand-border rounded-lg shadow-lg z-50"
-                    >
-                      <div className="p-4 border-b border-brand-border flex justify-between items-center">
-                        <h3 className="font-medium">Notifications</h3>
-                        <div className="flex gap-2">
-                          {unreadCount > 0 && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={markAllNotificationsAsRead}
-                            >
-                              Mark all read
-                            </Button>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => setShowNotifications(false)}
-                          >
-                            <CloseOutlined />
-                          </Button>
-                        </div>
-                      </div>
-                      
-                      <div className="divide-y divide-brand-border">
-                        {notifications.length > 0 ? (
-                          notifications.map((notification) => (
-                            <div 
-                              key={notification.id} 
-                              className={`p-4 hover:bg-brand-background transition-colors cursor-pointer ${!notification.read ? 'bg-brand-primary/5' : ''}`}
-                              onClick={() => markNotificationAsRead(notification.id)}
-                            >
-                              <div className="flex gap-3">
-                                {getNotificationIcon(notification.type)}
-                                <div className="flex-1">
-                                  <div className="flex justify-between">
-                                    <h4 className={`font-medium text-sm ${!notification.read ? 'text-brand-primary' : ''}`}>
-                                      {notification.title}
-                                    </h4>
-                                    <button 
-                                      className="text-brand-muted-foreground hover:text-brand-foreground"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        deleteNotification(notification.id);
-                                      }}
-                                    >
-                                      <CloseOutlined className="text-xs" />
-                                    </button>
-                                  </div>
-                                  <p className="text-sm text-brand-muted-foreground mt-1">
-                                    {notification.message}
-                                  </p>
-                                  <p className="text-xs text-brand-muted-foreground mt-2">
-                                    {formatRelativeTime(notification.timestamp)}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="p-6 text-center text-brand-muted-foreground">
-                            No notifications
-                          </div>
-                        )}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+              {/* Notifications - Using our new reusable component */}
+              <NotificationTrigger 
+                id="admin-notification-button"
+                notifications={notifications}
+                unreadCount={unreadCount}
+                onMarkAsRead={markNotificationAsRead}
+                onMarkAllAsRead={markAllNotificationsAsRead}
+                onDelete={deleteNotification}
+                position="right"
+              />
               
               {/* Admin Profile */}
               <div className="flex items-center gap-2">

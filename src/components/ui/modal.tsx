@@ -2,6 +2,7 @@ import * as React from "react"
 import { Modal as AntModal, ModalProps as AntModalProps } from "antd"
 import { cn } from "@/lib/utils"
 import { cva, type VariantProps } from "class-variance-authority"
+import { motion, AnimatePresence } from "framer-motion" // Import framer-motion
 
 const modalVariants = cva(
   "rounded-lg border border-brand-border bg-brand-background shadow-lg",
@@ -47,12 +48,48 @@ function Modal({
   closable = true,
   ...props
 }: ModalProps) {
+  // Animation variants for the modal
+  const modalAnimationVariants = {
+    hidden: { opacity: 0, scale: 0.95 },
+    visible: { 
+      opacity: 1, 
+      scale: 1,
+      transition: { 
+        type: "spring",
+        damping: 25,
+        stiffness: 400
+      }
+    },
+    exit: { 
+      opacity: 0, 
+      scale: 0.98,
+      transition: { 
+        duration: 0.15,
+        ease: "easeOut" 
+      }
+    }
+  };
+
   return (
     <AntModal
       className={cn(modalVariants({ size }), containerClassName)}
       closable={closable}
       centered
       footer={null}
+      modalRender={(modal) => (
+        <AnimatePresence>
+          {props.open && (
+            <motion.div
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              variants={modalAnimationVariants}
+            >
+              {modal}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
       {...props}
     >
       <div className={cn("flex flex-col", className)}>

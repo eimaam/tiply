@@ -14,11 +14,16 @@ import {
   SettingOutlined,
   AppstoreOutlined,
   WarningOutlined,
-  InfoCircleOutlined
+  InfoCircleOutlined,
+  FilterOutlined
 } from '@ant-design/icons';
 import DataFilter from '@/components/ui/filters/DataFilter';
 import { DataFilter as DataFilterType } from '@/lib/types/filters';
 import { CurrencyType, TransactionStatus, TransactionType } from '@/lib/types/transaction';
+import { MetricCard } from '@/components/ui/dashboard/MetricCard';
+import { DashboardCard } from '@/components/ui/dashboard/DashboardCard';
+import { BarChart, ChartData } from '@/components/ui/dashboard/BarChart';
+import { TransactionCard } from '@/components/ui/dashboard/TransactionCard';
 
 // Original mock data - we'll use this as base data before filtering
 const originalOverviewStats = {
@@ -320,6 +325,15 @@ const AdminDashboardPage = () => {
     }
   };
 
+  // Convert weekly data to format required by BarChart component
+  const getChartData = (): ChartData[] => {
+    return weeklyData.map(day => ({
+      label: day.day,
+      value: day.revenue,
+      secondaryValue: `${day.transactions} transactions`
+    }));
+  };
+
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -336,43 +350,9 @@ const AdminDashboardPage = () => {
     show: { opacity: 1, y: 0 }
   };
 
-  // Activity icon based on type
-  const getActivityIcon = (type) => {
-    switch(type) {
-      case 'new_user':
-        return <UserOutlined className="text-blue-500" />;
-      case 'large_tip':
-        return <DollarOutlined className="text-green-500" />;
-      case 'transaction_error':
-        return <WarningOutlined className="text-red-500" />;
-      case 'withdrawal':
-        return <FallOutlined className="text-orange-500" />;
-      default:
-        return <InfoCircleOutlined className="text-brand-muted-foreground" />;
-    }
-  };
-
   // Format large numbers with commas
   const formatNumber = (num) => {
     return num.toLocaleString('en-US');
-  };
-
-  // Format date relative to now (like "5 minutes ago")
-  const formatRelativeTime = (dateString) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffMins = Math.round(diffMs / 60000);
-    
-    if (diffMins < 60) {
-      return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
-    } else if (diffMins < 1440) {
-      const hours = Math.floor(diffMins / 60);
-      return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
-    } else {
-      const days = Math.floor(diffMins / 1440);
-      return `${days} day${days !== 1 ? 's' : ''} ago`;
-    }
   };
 
   return (
@@ -399,128 +379,66 @@ const AdminDashboardPage = () => {
 
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <motion.div variants={itemVariants} className="bg-brand-surface border border-brand-border rounded-xl p-6 shadow-sm">
-            <div className="flex justify-between">
-              <div>
-                <p className="text-brand-muted-foreground">Total Revenue</p>
-                {isLoading ? (
-                  <div className="h-8 w-32 bg-brand-border/30 rounded animate-pulse mt-2"></div>
-                ) : (
-                  <h3 className="text-3xl font-bold mt-2">${formatNumber(overviewStats.totalRevenue)}</h3>
-                )}
-                <div className="flex items-center gap-1 mt-2 text-green-500">
-                  <RiseOutlined />
-                  <span className="text-sm">{overviewStats.monthlyGrowth}% vs last month</span>
-                </div>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-brand-primary/10 flex items-center justify-center">
-                <DollarOutlined className="text-xl text-brand-primary" />
-              </div>
-            </div>
-          </motion.div>
+          <MetricCard
+            title="Total Revenue"
+            value={overviewStats.totalRevenue}
+            prefix="$"
+            loading={isLoading}
+            icon={<DollarOutlined />}
+            change={{
+              value: overviewStats.monthlyGrowth,
+              isPositive: overviewStats.monthlyGrowth > 0
+            }}
+            helpText="vs last month"
+          />
 
-          <motion.div variants={itemVariants} className="bg-brand-surface border border-brand-border rounded-xl p-6 shadow-sm">
-            <div className="flex justify-between">
-              <div>
-                <p className="text-brand-muted-foreground">Total Users</p>
-                {isLoading ? (
-                  <div className="h-8 w-24 bg-brand-border/30 rounded animate-pulse mt-2"></div>
-                ) : (
-                  <h3 className="text-3xl font-bold mt-2">{formatNumber(overviewStats.totalUsers)}</h3>
-                )}
-                <div className="flex items-center gap-1 mt-2 text-green-500">
-                  <RiseOutlined />
-                  <span className="text-sm">{overviewStats.userGrowth}% new signups</span>
-                </div>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-brand-primary/10 flex items-center justify-center">
-                <TeamOutlined className="text-xl text-brand-primary" />
-              </div>
-            </div>
-          </motion.div>
+          <MetricCard
+            title="Total Users"
+            value={overviewStats.totalUsers}
+            loading={isLoading}
+            icon={<TeamOutlined />}
+            change={{
+              value: overviewStats.userGrowth,
+              isPositive: true
+            }}
+            helpText="new signups"
+          />
 
-          <motion.div variants={itemVariants} className="bg-brand-surface border border-brand-border rounded-xl p-6 shadow-sm">
-            <div className="flex justify-between">
-              <div>
-                <p className="text-brand-muted-foreground">Active Users</p>
-                {isLoading ? (
-                  <div className="h-8 w-24 bg-brand-border/30 rounded animate-pulse mt-2"></div>
-                ) : (
-                  <h3 className="text-3xl font-bold mt-2">{formatNumber(overviewStats.activeUsers)}</h3>
-                )}
-                <div className="flex items-center gap-1 mt-2">
-                  <span className="text-sm text-brand-muted-foreground">
-                    {Math.round((overviewStats.activeUsers / overviewStats.totalUsers) * 100)}% of total
-                  </span>
-                </div>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-brand-primary/10 flex items-center justify-center">
-                <UserOutlined className="text-xl text-brand-primary" />
-              </div>
-            </div>
-          </motion.div>
+          <MetricCard
+            title="Active Users"
+            value={overviewStats.activeUsers}
+            loading={isLoading}
+            icon={<UserOutlined />}
+            helpText={`${Math.round((overviewStats.activeUsers / overviewStats.totalUsers) * 100)}% of total`}
+          />
 
-          <motion.div variants={itemVariants} className="bg-brand-surface border border-brand-border rounded-xl p-6 shadow-sm">
-            <div className="flex justify-between">
-              <div>
-                <p className="text-brand-muted-foreground">Success Rate</p>
-                {isLoading ? (
-                  <div className="h-8 w-16 bg-brand-border/30 rounded animate-pulse mt-2"></div>
-                ) : (
-                  <h3 className="text-3xl font-bold mt-2">{overviewStats.tipSuccessRate}%</h3>
-                )}
-                <div className="flex items-center gap-1 mt-2 text-yellow-500">
-                  <BellOutlined />
-                  <span className="text-sm">{overviewStats.pendingTransactions} pending</span>
-                </div>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center">
-                <LineChartOutlined className="text-xl text-green-500" />
-              </div>
-            </div>
-          </motion.div>
+          <MetricCard
+            title="Success Rate"
+            value={overviewStats.tipSuccessRate}
+            suffix="%"
+            loading={isLoading}
+            icon={<LineChartOutlined />}
+            iconBgClassName="bg-green-500/10"
+            helpText={`${overviewStats.pendingTransactions} pending`}
+          />
         </div>
 
         {/* Charts & Activity Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Chart */}
-          <motion.div 
-            variants={itemVariants} 
-            className="lg:col-span-2 bg-brand-surface border border-brand-border rounded-xl p-6 shadow-sm"
+          <DashboardCard
+            title="Weekly Performance"
+            className="lg:col-span-2"
+            actionLabel="Last 7 days"
+            isLoading={isLoading}
           >
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold">Weekly Performance</h3>
-              <div className="flex items-center gap-2">
-                <select className="border border-brand-border rounded-md px-3 py-1.5 text-sm bg-brand-surface">
-                  <option>Last 7 days</option>
-                  <option>Last 30 days</option>
-                  <option>Last 3 months</option>
-                </select>
-              </div>
-            </div>
-            
-            {isLoading ? (
-              <div className="h-64 flex items-center justify-center">
-                <div className="h-10 w-10 border-4 border-brand-primary/30 border-t-brand-primary rounded-full animate-spin"></div>
-              </div>
-            ) : (
-              <div>
-                <div className="h-64 flex items-center justify-center">
-                  {/* Placeholder for chart - would use a real chart library in production */}
-                  <div className="w-full h-full flex items-end justify-between px-4 border-b border-l border-brand-border">
-                    {weeklyData.map((data, index) => (
-                      <div key={index} className="flex flex-col items-center">
-                        <div 
-                          className="w-10 bg-brand-primary rounded-t-md transition-all hover:opacity-80 cursor-pointer"
-                          style={{ height: `${(data.revenue/5000)*100}%`, maxHeight: '100%' }}
-                        ></div>
-                        <div className="mt-2 text-xs text-brand-muted-foreground">{data.day}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="flex justify-around mt-8">
+            <BarChart
+              data={getChartData()}
+              height={240}
+              isLoading={isLoading}
+              valuePrefix="$"
+              summary={
+                <div className="flex justify-around mt-4">
                   <div className="text-center">
                     <div className="text-3xl font-bold">{formatNumber(weeklyData.reduce((acc, day) => acc + day.transactions, 0))}</div>
                     <div className="text-brand-muted-foreground">Total Transactions</div>
@@ -534,20 +452,21 @@ const AdminDashboardPage = () => {
                     <div className="text-brand-muted-foreground">Avg Tip Size</div>
                   </div>
                 </div>
-              </div>
-            )}
-          </motion.div>
+              }
+            />
+          </DashboardCard>
           
           {/* Recent Activity */}
-          <motion.div variants={itemVariants} className="bg-brand-surface border border-brand-border rounded-xl shadow-sm">
-            <div className="p-6 border-b border-brand-border">
-              <h3 className="text-lg font-semibold">Recent Activity</h3>
-            </div>
-            
+          <DashboardCard
+            title="Recent Activity"
+            isLoading={isLoading}
+            actionLabel="View All"
+            onAction={() => {/* Navigate to all activity */}}
+          >
             <div className="overflow-hidden">
               {isLoading ? (
-                <div className="space-y-4 p-6">
-                  {[1, 2, 3, 4].map((i) => (
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
                     <div key={i} className="flex items-center gap-4">
                       <div className="h-10 w-10 rounded-full bg-brand-border/30 animate-pulse"></div>
                       <div className="space-y-2 flex-1">
@@ -558,33 +477,23 @@ const AdminDashboardPage = () => {
                   ))}
                 </div>
               ) : recentActivity.length > 0 ? (
-                <ul>
+                <div>
                   {recentActivity.map((activity) => (
-                    <li 
-                      key={activity.id} 
-                      className="px-6 py-4 border-b border-brand-border last:border-0 hover:bg-brand-background/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 rounded-full bg-brand-primary/10 flex items-center justify-center">
-                          {getActivityIcon(activity.type)}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex flex-col sm:flex-row sm:justify-between">
-                            <div className="font-medium text-sm">
-                              {activity.user}
-                            </div>
-                            <div className="text-xs text-brand-muted-foreground">
-                              {formatRelativeTime(activity.timestamp)}
-                            </div>
-                          </div>
-                          <div className="text-sm text-brand-muted-foreground">
-                            {activity.details}
-                          </div>
-                        </div>
-                      </div>
-                    </li>
+                    <TransactionCard
+                      key={activity.id}
+                      id={activity.id}
+                      type={activity.type}
+                      user={activity.user}
+                      details={activity.details}
+                      timestamp={activity.timestamp}
+                      amount={activity.amount}
+                      status={activity.status}
+                      currency="USDC"
+                      showActionButton={true}
+                      actionButtonText="Details"
+                    />
                   ))}
-                </ul>
+                </div>
               ) : (
                 <div className="p-6 text-center">
                   <p className="text-brand-muted-foreground">No activity matches your current filters</p>
@@ -612,15 +521,9 @@ const AdminDashboardPage = () => {
                 </div>
               )}
             </div>
-            
-            <div className="p-4 border-t border-brand-border">
-              <Button variant="ghost" className="w-full text-sm">
-                View All Activity
-              </Button>
-            </div>
-          </motion.div>
+          </DashboardCard>
         </div>
-        
+
         {/* Quick Actions */}
         <motion.div variants={itemVariants} className="bg-brand-surface border border-brand-border rounded-xl p-6 shadow-sm">
           <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>

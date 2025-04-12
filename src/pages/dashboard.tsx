@@ -1,8 +1,8 @@
-import * as React from 'react'
-import { motion } from 'framer-motion'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+import * as React from 'react';
+import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { 
   LineChartOutlined, 
   CopyOutlined, 
@@ -14,11 +14,15 @@ import {
   CheckCircleOutlined,
   FilterOutlined,
   FileTextOutlined
-} from '@ant-design/icons'
-import { SidebarNav } from '@/components/ui/sidebar-nav'
-import DataFilter from '@/components/ui/filters/DataFilter'
-import { DataFilter as DataFilterType } from '@/lib/types/filters'
-import { CurrencyType, TransactionStatus, TransactionType } from '@/lib/types/transaction'
+} from '@ant-design/icons';
+import { SidebarNav } from '@/components/ui/sidebar-nav';
+import DataFilter from '@/components/ui/filters/DataFilter';
+import { DataFilter as DataFilterType } from '@/lib/types/filters';
+import { CurrencyType, TransactionStatus, TransactionType } from '@/lib/types/transaction';
+import { MetricCard } from '@/components/ui/dashboard/MetricCard';
+import { DashboardCard } from '@/components/ui/dashboard/DashboardCard';
+import { BarChart, ChartData } from '@/components/ui/dashboard/BarChart';
+import { TransactionCard } from '@/components/ui/dashboard/TransactionCard';
 
 // Set current user's premium status for demo purposes
 const USER_IS_PREMIUM = false;
@@ -384,6 +388,16 @@ export function Dashboard() {
       monthlyVolume: weeklyVolume
     });
   };
+
+  // Format weekly chart data
+  const getWeeklyChartData = (): ChartData[] => {
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return analyticsData.monthlyVolume.map((value, index) => ({
+      value,
+      label: days[index % days.length],
+      secondaryValue: `$${value.toFixed(2)} USDC`
+    }));
+  };
   
   // Animation variants
   const containerVariants = {
@@ -433,32 +447,31 @@ export function Dashboard() {
         animate="show"
       >
         {/* Dashboard Filter */}
-        <motion.div variants={itemVariants} className="mb-8 bg-brand-surface border border-brand-border rounded-xl p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-semibold">Dashboard Filters</h2>
+        <motion.div variants={itemVariants}>
+          <DashboardCard
+            title="Dashboard Filters"
+            className="mb-8"
+            actionLabel={!USER_IS_PREMIUM ? 'Upgrade for advanced filters' : undefined}
+            onAction={!USER_IS_PREMIUM ? () => { window.location.href = '/pricing'; } : undefined}
+            icon={!USER_IS_PREMIUM ? <FilterOutlined /> : undefined}
+          >
+            <DataFilter
+              filters={filters}
+              onFilterChange={handleFilterChange}
+              isPremiumUser={USER_IS_PREMIUM}
+              availableTypes={[TransactionType.TIP]}
+              availableStatuses={Object.values(TransactionStatus)}
+              currencies={Object.values(CurrencyType)}
+              showReset={true}
+              className="mb-4"
+            />
+            
             {!USER_IS_PREMIUM && (
-              <a href="/pricing" className="text-sm text-brand-primary hover:underline flex items-center">
-                <FilterOutlined className="mr-1" /> Upgrade for advanced filters
-              </a>
+              <div className="mt-4 p-3 bg-brand-primary/5 border border-brand-primary/20 rounded-lg text-sm">
+                <p className="text-brand-muted-foreground">Free users can view up to 14 days of transaction history. <a href="/pricing" className="text-brand-primary hover:underline">Upgrade to premium</a> for unlimited history and advanced filters.</p>
+              </div>
             )}
-          </div>
-          
-          <DataFilter
-            filters={filters}
-            onFilterChange={handleFilterChange}
-            isPremiumUser={USER_IS_PREMIUM}
-            availableTypes={[TransactionType.TIP]}
-            availableStatuses={Object.values(TransactionStatus)}
-            currencies={Object.values(CurrencyType)}
-            showReset={true}
-            className="mb-4"
-          />
-          
-          {!USER_IS_PREMIUM && (
-            <div className="mt-4 p-3 bg-brand-primary/5 border border-brand-primary/20 rounded-lg text-sm">
-              <p className="text-brand-muted-foreground">Free users can view up to 14 days of transaction history. <a href="/pricing" className="text-brand-primary hover:underline">Upgrade to premium</a> for unlimited history and advanced filters.</p>
-            </div>
-          )}
+          </DashboardCard>
         </motion.div>
 
         {/* Top Stats Section */}
@@ -466,179 +479,144 @@ export function Dashboard() {
           variants={itemVariants}
           className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8"
         >
-          <div className="bg-brand-surface rounded-xl border border-brand-border p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <h3 className="text-brand-muted-foreground">Total Earnings</h3>
-                {isLoading ? (
-                  <div className="h-8 w-24 bg-brand-border/30 rounded animate-pulse mt-2"></div>
-                ) : (
-                  <p className="text-3xl font-bold mt-2">${analyticsData.totalValue} <span className="text-sm text-brand-muted-foreground">USDC</span></p>
-                )}
-              </div>
-              <div className="p-3 bg-brand-primary/10 rounded-full">
-                <DollarOutlined className="text-brand-primary text-xl" />
-              </div>
-            </div>
-          </div>
+          <MetricCard
+            title="Total Earnings"
+            value={analyticsData.totalValue}
+            prefix="$"
+            suffix=" USDC"
+            loading={isLoading}
+            icon={<DollarOutlined />}
+          />
           
-          <div className="bg-brand-surface rounded-xl border border-brand-border p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <h3 className="text-brand-muted-foreground">Total Tips</h3>
-                {isLoading ? (
-                  <div className="h-8 w-16 bg-brand-border/30 rounded animate-pulse mt-2"></div>
-                ) : (
-                  <p className="text-3xl font-bold mt-2">{analyticsData.totalTips}</p>
-                )}
-              </div>
-              <div className="p-3 bg-brand-primary/10 rounded-full">
-                <UserOutlined className="text-brand-primary text-xl" />
-              </div>
-            </div>
-          </div>
+          <MetricCard
+            title="Total Tips"
+            value={analyticsData.totalTips}
+            loading={isLoading}
+            icon={<UserOutlined />}
+          />
           
-          <div className="bg-brand-surface rounded-xl border border-brand-border p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <h3 className="text-brand-muted-foreground">Weekly Growth</h3>
-                {isLoading ? (
-                  <div className="h-8 w-20 bg-brand-border/30 rounded animate-pulse mt-2"></div>
-                ) : (
-                  <p className={`text-3xl font-bold mt-2 ${analyticsData.weeklyGrowth >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                    {analyticsData.weeklyGrowth >= 0 ? '+' : ''}{analyticsData.weeklyGrowth}%
-                  </p>
-                )}
-              </div>
-              <div className="p-3 bg-green-500/10 rounded-full">
-                <RiseOutlined className="text-green-500 text-xl" />
-              </div>
-            </div>
-          </div>
+          <MetricCard
+            title="Weekly Growth"
+            value={analyticsData.weeklyGrowth}
+            prefix={analyticsData.weeklyGrowth >= 0 ? "+" : ""}
+            suffix="%"
+            loading={isLoading}
+            icon={<RiseOutlined />}
+            iconBgClassName={analyticsData.weeklyGrowth >= 0 ? "bg-green-500/10" : "bg-red-500/10"}
+          />
           
-          <div className="bg-brand-surface rounded-xl border border-brand-border p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <h3 className="text-brand-muted-foreground">Avg. Tip Value</h3>
-                {isLoading ? (
-                  <div className="h-8 w-20 bg-brand-border/30 rounded animate-pulse mt-2"></div>
-                ) : (
-                  <p className="text-3xl font-bold mt-2">${analyticsData.avgTipValue} <span className="text-sm text-brand-muted-foreground">USDC</span></p>
-                )}
-              </div>
-              <div className="p-3 bg-brand-primary/10 rounded-full">
-                <LineChartOutlined className="text-brand-primary text-xl" />
-              </div>
-            </div>
-          </div>
+          <MetricCard
+            title="Avg. Tip Value"
+            value={analyticsData.avgTipValue}
+            prefix="$"
+            suffix=" USDC"
+            loading={isLoading}
+            icon={<LineChartOutlined />}
+          />
         </motion.div>
         
         {/* Main Content */}
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Left Column */}
           <div className="lg:col-span-2 space-y-8">
-            <motion.div variants={itemVariants} className="bg-gradient-to-br from-brand-primary/20 to-brand-accent/20 rounded-xl border border-brand-border p-6 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-brand-primary opacity-20 rounded-full blur-3xl"></div>
-              
-              <h2 className="text-2xl font-semibold mb-4">Your TipLink</h2>
-              <div className="flex gap-2 relative z-10">
-                <Input 
-                  value={tipLink} 
-                  readOnly
-                  className="font-mono text-sm bg-opacity-70"
-                />
-                <Button
-                  variant={copied ? "default" : "outline"}
-                  size="icon"
-                  onClick={copyToClipboard}
-                  className="shrink-0 transition-all duration-300"
-                >
-                  {copied ? <CheckCircleOutlined /> : <CopyOutlined />}
-                </Button>
-              </div>
-              <p className="mt-4 text-sm text-brand-muted-foreground">
-                Share this link with your audience to receive tips. Tips are sent directly to your connected wallet.
-              </p>
+            <motion.div variants={itemVariants}>
+              <DashboardCard
+                title="Your TipLink"
+                gradient={true}
+                className="mb-8"
+              >
+                <div className="flex gap-2 relative z-10">
+                  <Input 
+                    value={tipLink} 
+                    readOnly
+                    className="font-mono text-sm bg-opacity-70"
+                  />
+                  <Button
+                    variant={copied ? "default" : "outline"}
+                    size="icon"
+                    onClick={copyToClipboard}
+                    className="shrink-0 transition-all duration-300"
+                  >
+                    {copied ? <CheckCircleOutlined /> : <CopyOutlined />}
+                  </Button>
+                </div>
+                <p className="mt-4 text-sm text-brand-muted-foreground">
+                  Share this link with your audience to receive tips. Tips are sent directly to your connected wallet.
+                </p>
+              </DashboardCard>
             </motion.div>
 
-            <motion.div variants={itemVariants} className="bg-brand-surface rounded-xl border border-brand-border p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-semibold">Recent Tips</h2>
-                <Button variant="ghost" size="sm">View All</Button>
-              </div>
-              
-              <div className="space-y-4">
-                {isLoading ? (
-                  // Loading skeleton
-                  Array(3).fill(0).map((_, index) => (
-                    <div key={index} className="p-4 rounded-lg border border-brand-border">
-                      <div className="flex justify-between items-start">
-                        <div className="space-y-2">
-                          <div className="h-5 w-24 bg-brand-border/30 rounded animate-pulse"></div>
-                          <div className="h-4 w-48 bg-brand-border/30 rounded animate-pulse"></div>
-                        </div>
-                        <div className="text-right space-y-2">
-                          <div className="h-5 w-16 bg-brand-border/30 rounded animate-pulse"></div>
-                          <div className="h-4 w-12 bg-brand-border/30 rounded animate-pulse ml-auto"></div>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                ) : visibleTips.length > 0 ? (
-                  visibleTips.map(tip => (
-                    <div 
-                      key={tip.id} 
-                      className="p-4 rounded-lg border border-brand-border hover:border-brand-primary/50 transition-all duration-200"
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-medium">{tip.sender}</p>
-                          <p className="text-sm text-brand-muted-foreground mt-1">{tip.message}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-lg font-semibold text-brand-primary">${tip.amount.toFixed(2)} <span className="text-xs">{tip.tokenType}</span></p>
-                          <p className="text-xs text-brand-muted-foreground mt-1 flex items-center justify-end">
-                            <ClockCircleOutlined className="mr-1" />
-                            {formatRelativeTime(tip.timestamp)}
-                          </p>
+            <motion.div variants={itemVariants}>
+              <DashboardCard
+                title="Recent Tips"
+                actionLabel="View All"
+                onAction={() => console.log("View all tips")}
+              >
+                <div className="space-y-4">
+                  {isLoading ? (
+                    // Loading skeleton
+                    Array(3).fill(0).map((_, index) => (
+                      <div key={index} className="p-4 rounded-lg border border-brand-border">
+                        <div className="flex justify-between items-start">
+                          <div className="space-y-2">
+                            <div className="h-5 w-24 bg-brand-border/30 rounded animate-pulse"></div>
+                            <div className="h-4 w-48 bg-brand-border/30 rounded animate-pulse"></div>
+                          </div>
+                          <div className="text-right space-y-2">
+                            <div className="h-5 w-16 bg-brand-border/30 rounded animate-pulse"></div>
+                            <div className="h-4 w-12 bg-brand-border/30 rounded animate-pulse ml-auto"></div>
+                          </div>
                         </div>
                       </div>
+                    ))
+                  ) : visibleTips.length > 0 ? (
+                    visibleTips.map(tip => (
+                      <TransactionCard
+                        key={tip.id}
+                        id={tip.id}
+                        type="tip"
+                        user={tip.sender}
+                        details={tip.message}
+                        timestamp={tip.timestamp}
+                        amount={tip.amount}
+                        currency={tip.tokenType}
+                        status="completed"
+                      />
+                    ))
+                  ) : (
+                    <div className="py-12 text-center">
+                      <FileTextOutlined style={{ fontSize: '24px' }} className="text-brand-muted-foreground mb-2" />
+                      <p className="text-brand-muted-foreground">No tips found matching your filters</p>
+                      <Button 
+                        variant="link" 
+                        onClick={resetFilters}
+                      >
+                        Reset Filters
+                      </Button>
                     </div>
-                  ))
-                ) : (
-                  <div className="py-12 text-center">
-                    <FileTextOutlined style={{ fontSize: '24px' }} className="text-brand-muted-foreground mb-2" />
-                    <p className="text-brand-muted-foreground">No tips found matching your filters</p>
+                  )}
+                </div>
+                
+                {visibleTips.length > 0 && allTips.length > visibleTips.length && (
+                  <div className="mt-6 text-center">
                     <Button 
-                      variant="link" 
-                      onClick={resetFilters}
+                      variant="outline"
+                      onClick={() => setVisibleTips(allTips.slice(0, visibleTips.length + 5))}
                     >
-                      Reset Filters
+                      Load More
                     </Button>
                   </div>
                 )}
-              </div>
-              
-              {visibleTips.length > 0 && allTips.length > visibleTips.length && (
-                <div className="mt-6 text-center">
-                  <Button 
-                    variant="outline"
-                    onClick={() => setVisibleTips(allTips.slice(0, visibleTips.length + 5))}
-                  >
-                    Load More
-                  </Button>
-                </div>
-              )}
+              </DashboardCard>
             </motion.div>
           </div>
           
           {/* Right Column */}
           <motion.div variants={itemVariants} className="space-y-8">
-            <div className="bg-brand-surface rounded-xl border border-brand-border p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold">Profile Settings</h2>
-                <SettingOutlined className="text-brand-muted-foreground" />
-              </div>
+            <DashboardCard
+              title="Profile Settings"
+              icon={<SettingOutlined />}
+            >
               <form className="space-y-4">
                 <Input label="Display Name" defaultValue="John Doe" />
                 <Input label="Username" defaultValue="johndoe" />
@@ -646,10 +624,11 @@ export function Dashboard() {
                 <Textarea label="Bio" defaultValue="Web3 creator and developer building in the Solana ecosystem." />
                 <Button className="w-full">Save Changes</Button>
               </form>
-            </div>
+            </DashboardCard>
 
-            <div className="bg-brand-surface rounded-xl border border-brand-border p-6">
-              <h2 className="text-xl font-semibold mb-4">Token Preferences</h2>
+            <DashboardCard
+              title="Token Preferences"
+            >
               <div className="space-y-4">
                 <div className="p-4 rounded-lg border border-brand-border flex items-center justify-between">
                   <div className="flex items-center">
@@ -674,34 +653,24 @@ export function Dashboard() {
                 {/* TODO: enable feature later */}
                 {/* <Button variant="outline" className="w-full">+ Add Token</Button> */}
               </div>
-            </div>
+            </DashboardCard>
             
             {/* Weekly Volume Chart */}
-            <div className="bg-brand-surface rounded-xl border border-brand-border p-6">
-              <h2 className="text-xl font-semibold mb-4">Weekly Volume</h2>
-              {isLoading ? (
-                <div className="h-40 w-full bg-brand-border/30 rounded animate-pulse"></div>
-              ) : (
-                <div className="h-40">
-                  <div className="w-full h-full flex items-end justify-between px-2 border-b border-l border-brand-border">
-                    {analyticsData.monthlyVolume.map((day, index) => (
-                      <div key={index} className="flex flex-col items-center">
-                        <div 
-                          className="w-6 bg-brand-primary rounded-t-md"
-                          style={{ height: `${Math.max((day/Math.max(...analyticsData.monthlyVolume))*100, 5)}%` }}
-                        ></div>
-                        <div className="mt-2 text-xs text-brand-muted-foreground">
-                          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][index]}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+            <DashboardCard
+              title="Weekly Volume"
+            >
+              <BarChart
+                data={getWeeklyChartData()}
+                height={160}
+                isLoading={isLoading}
+                valuePrefix="$"
+                valueSuffix=" USDC"
+                showTooltip={true}
+              />
+            </DashboardCard>
           </motion.div>
         </div>
       </motion.div>
     </div>
-  )
+  );
 }

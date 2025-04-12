@@ -11,11 +11,18 @@ import {
   MenuOutlined,
   CloseOutlined,
   DollarOutlined,
-  BellOutlined,
-  QuestionCircleOutlined
+  QuestionCircleOutlined,
 } from '@ant-design/icons';
-import logo from '@/assets/images/tipp-link-logo.png'
-import { smoothScrollTo } from '@/lib/utils';
+import logo from '@/assets/images/tipp-link-logo.png';
+import { 
+  Modal, 
+  ModalHeader, 
+  ModalTitle, 
+  ModalBody, 
+  ModalFooter 
+} from '@/components/ui/modal';
+import { NotificationTrigger } from '@/components/notifications';
+import { UserNotification } from '@/components/notifications/NotificationTypes';
 
 interface SidebarNavProps {
   username?: string;
@@ -30,6 +37,38 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeRoute, setActiveRoute] = useState('/dashboard');
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  
+  // Mock notifications data for regular users focused on tip notifications
+  const [notifications, setNotifications] = useState<UserNotification[]>([
+    {
+      id: '1',
+      type: 'tip',
+      title: 'New tip received!',
+      message: 'You received $10.00 from @cryptolover',
+      amount: '$10.00',
+      timestamp: '2025-04-11T10:30:00Z',
+      read: false
+    },
+    {
+      id: '2',
+      type: 'system',
+      title: 'Profile verification',
+      message: 'Your profile has been verified. You now have access to all features.',
+      timestamp: '2025-04-10T15:45:20Z',
+      read: false
+    },
+    {
+      id: '3',
+      type: 'promo',
+      title: 'Limited time offer',
+      message: 'Share your TippLink with 5 friends to unlock premium features for 1 month.',
+      timestamp: '2025-04-09T08:12:15Z',
+      read: true
+    }
+  ]);
+
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   // Determine active route on component mount and when location changes
   useEffect(() => {
@@ -47,15 +86,15 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
 
   // Close sidebar when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: any) => {
+    const handleClickOutside = (event: MouseEvent) => {
       const sidebar = document.getElementById('sidebar');
       const menuButton = document.getElementById('menu-button');
       
       if (
         sidebar && 
-        !sidebar.contains(event.target) && 
+        !sidebar.contains(event.target as Node) && 
         menuButton && 
-        !menuButton.contains(event.target) && 
+        !menuButton.contains(event.target as Node) && 
         isSidebarOpen
       ) {
         setIsSidebarOpen(false);
@@ -82,6 +121,30 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   // Handle navigation
   const handleNavigation = (path: string) => {
     navigate(path);
+  };
+
+  const handleLogout = () => {
+    // In a real app, this would clear auth tokens etc.
+    setShowLogoutModal(false);
+    navigate('/login');
+  };
+
+  const markNotificationAsRead = (id: string) => {
+    setNotifications(prev => 
+      prev.map(n => n.id === id ? { ...n, read: true } : n)
+    );
+  };
+
+  const markAllNotificationsAsRead = () => {
+    setNotifications(prev => 
+      prev.map(n => ({ ...n, read: true }))
+    );
+  };
+
+  const deleteNotification = (id: string) => {
+    setNotifications(prev => 
+      prev.filter(n => n.id !== id)
+    );
   };
 
   // Animation variants
@@ -111,30 +174,43 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
 
   return (
     <>
-      {/* Header with logo and menu button */}
+      {/* Header with logo, notifications and menu button */}
       <header className='border-b border-brand-border bg-brand-surface sticky top-0 z-20'>
         <div className='container mx-auto px-4 py-4'>
           <div className='flex justify-between items-center'>
             {/* Logo */}
-            
             <div className="flex items-center">
-          <Link to="/dashboard" className="flex items-center space-x">
-            <img src={logo} alt="Tipp Link Logo" className="h-8 md:h-12 w-auto" />
-            <span className="text-xl font-bold text-brand-primary">TippLink</span>
-          </Link>
-        </div>
+              <Link to="/dashboard" className="flex items-center space-x">
+                <img src={logo} alt="Tipp Link Logo" className="h-8 md:h-12 w-auto" />
+                <span className="text-xl font-bold text-brand-primary">TippLink</span>
+              </Link>
+            </div>
             
-            {/* Menu Button */}
-            <Button
-              id='menu-button'
-              variant='ghost'
-              size='icon'
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              aria-label='Toggle menu'
-              className='rounded-full'
-            >
-              <MenuOutlined />
-            </Button>
+            {/* Right side actions */}
+            <div className="flex items-center space-x-2">
+              {/* Notifications - Using our new reusable component */}
+              <NotificationTrigger 
+                id="user-notification-button"
+                notifications={notifications}
+                unreadCount={unreadCount}
+                onMarkAsRead={markNotificationAsRead}
+                onMarkAllAsRead={markAllNotificationsAsRead}
+                onDelete={deleteNotification}
+                position="right"
+              />
+              
+              {/* Menu Button */}
+              <Button
+                id='menu-button'
+                variant='ghost'
+                size='icon'
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                aria-label='Toggle menu'
+                className='rounded-full'
+              >
+                <MenuOutlined />
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -240,7 +316,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                   fullWidth={true}
                   className='justify-start text-red-500 hover:text-red-600'
                   icon={<LogoutOutlined />}
-                  onClick={() => handleNavigation('/login')}
+                  onClick={() => setShowLogoutModal(true)}
                 >
                   Logout
                 </Button>
@@ -254,6 +330,33 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
           </motion.aside>
         )}
       </AnimatePresence>
+
+      {/* Logout Confirmation Modal */}
+      <Modal
+        open={showLogoutModal}
+        onCancel={() => setShowLogoutModal(false)}
+      >
+        <ModalHeader>
+          <ModalTitle>Confirm Logout</ModalTitle>
+        </ModalHeader>
+        <ModalBody>
+          <p>Are you sure you want to logout from your TippLink account?</p>
+        </ModalBody>
+        <ModalFooter>
+          <Button 
+            variant="outline" 
+            onClick={() => setShowLogoutModal(false)}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleLogout}
+            className="bg-red-500 hover:bg-red-600 text-white"
+          >
+            Logout
+          </Button>
+        </ModalFooter>
+      </Modal>
     </>
   );
 };
