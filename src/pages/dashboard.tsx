@@ -13,7 +13,8 @@ import {
   ClockCircleOutlined,
   CheckCircleOutlined,
   FilterOutlined,
-  FileTextOutlined
+  FileTextOutlined,
+  WalletOutlined,
 } from '@ant-design/icons';
 import { SidebarNav } from '@/components/ui/sidebar-nav';
 import DataFilter from '@/components/ui/filters/DataFilter';
@@ -23,6 +24,8 @@ import { MetricCard } from '@/components/ui/dashboard/MetricCard';
 import { DashboardCard } from '@/components/ui/dashboard/DashboardCard';
 import { BarChart, ChartData } from '@/components/ui/dashboard/BarChart';
 import { TransactionCard } from '@/components/ui/dashboard/TransactionCard';
+import { Withdrawal } from '@/components/wallet/Withdrawal';
+import { message } from 'antd';
 
 // Set current user's premium status for demo purposes
 const USER_IS_PREMIUM = false;
@@ -202,6 +205,7 @@ export function Dashboard() {
   const [allTips, setAllTips] = React.useState(originalTips);
   const [visibleTips, setVisibleTips] = React.useState(originalTips.slice(0, 5));
   const [analyticsData, setAnalyticsData] = React.useState(originalAnalyticsData);
+  const [currentBalance, setCurrentBalance] = React.useState(analyticsData.totalValue);
   
   // Filter state
   const [filters, setFilters] = React.useState<DataFilterType>({
@@ -435,6 +439,21 @@ export function Dashboard() {
     applyFilters(defaultFilters);
   };
 
+  // Handle withdrawal submission
+  const handleWithdrawal = async (address: string, amount: number): Promise<boolean> => {
+    console.log(`Withdrawing ${amount} USDC to wallet ${address}`);
+    
+    // This would be an API call in production
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        // Update balance after successful withdrawal
+        setCurrentBalance(prev => parseFloat((prev - amount).toFixed(2)));
+        message.success('Withdrawal successful!');
+        resolve(true);
+      }, 2000);
+    });
+  };
+
   return (
     <div className="min-h-screen bg-brand-background">
       {/* Replace the LoggedInNav with our new SidebarNav */}
@@ -512,6 +531,16 @@ export function Dashboard() {
             suffix=" USDC"
             loading={isLoading}
             icon={<LineChartOutlined />}
+          />
+
+          <MetricCard
+            title="Available Balance"
+            value={currentBalance}
+            prefix="$"
+            suffix=" USDC"
+            loading={isLoading}
+            icon={<WalletOutlined />}
+            action={<Withdrawal balance={currentBalance} onWithdraw={handleWithdrawal} />}
           />
         </motion.div>
         

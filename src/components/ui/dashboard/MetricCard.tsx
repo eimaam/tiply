@@ -14,6 +14,7 @@ export interface MetricCardProps {
   loading?: boolean;
   className?: string;
   iconBgClassName?: string;
+  action?: React.ReactNode;
 }
 
 export const MetricCard: React.FC<MetricCardProps> = ({
@@ -27,6 +28,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   loading = false,
   className = '',
   iconBgClassName = 'bg-brand-primary/10',
+  action,
 }) => {
   return (
     <div className={`bg-brand-surface border border-brand-border rounded-xl p-6 shadow-sm ${className}`}>
@@ -82,6 +84,12 @@ export const MetricCard: React.FC<MetricCardProps> = ({
           
           {!change && helpText && (
             <div className="mt-2 text-sm text-brand-muted-foreground">{helpText}</div>
+          )}
+          
+          {action && (
+            <div className="mt-4">
+              {action}
+            </div>
           )}
         </div>
         

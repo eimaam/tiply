@@ -1,4 +1,6 @@
-// Base notification interface that all notification types extend
+/**
+ * Base notification type with shared properties
+ */
 export interface BaseNotification {
   id: string;
   title: string;
@@ -7,26 +9,36 @@ export interface BaseNotification {
   read: boolean;
 }
 
-// User-facing notifications (for regular users)
+/**
+ * User-specific notification types
+ */
 export interface UserNotification extends BaseNotification {
   type: 'tip' | 'system' | 'promo';
-  amount?: string;
+  amount?: string; // Optional amount for tip notifications
 }
 
-// Admin-facing notifications (for admin dashboard)
+/**
+ * Admin-specific notification types
+ */
 export interface AdminNotification extends BaseNotification {
-  type: 'success' | 'info' | 'warning' | 'error';
+  type: 'info' | 'warning' | 'success' | 'error';
 }
 
-// Union type for all notification types
+/**
+ * Union type for all notification types
+ */
 export type Notification = UserNotification | AdminNotification;
 
-// Utility function to check if a notification is a user notification
-export function isUserNotification(notification: Notification): notification is UserNotification {
-  return ['tip', 'system', 'promo'].includes(notification.type);
-}
+/**
+ * Type guard to check if a notification is an AdminNotification
+ */
+export const isAdminNotification = (notification: Notification): notification is AdminNotification => {
+  return ['info', 'warning', 'success', 'error'].includes(notification.type as string);
+};
 
-// Utility function to check if a notification is an admin notification
-export function isAdminNotification(notification: Notification): notification is AdminNotification {
-  return ['success', 'info', 'warning', 'error'].includes(notification.type);
-}
+/**
+ * Type guard to check if a notification is a UserNotification
+ */
+export const isUserNotification = (notification: Notification): notification is UserNotification => {
+  return ['tip', 'system', 'promo'].includes(notification.type as string);
+};
