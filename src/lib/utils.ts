@@ -51,9 +51,9 @@ export const hasRoleAccess = (
 export const PROJECT_INFO = {
   name: "TipLink",
   description: "A decentralized tipping platform for creators and communities.",
-  url: "https://tiplink.xyz",
-  image: "https://tiplink.xyz/logo.png",
+  url: "https://usetiply.xyz",
+  image: "https://usetiply.xyz/logo.png",
   twitterUrl: "https://twitter.com/tipplink",
   repoUrl: "https://github.com/eimaam/tipplink",
-  supportEmail: "support@tipplink.xyz"
+  supportEmail: "support@usetiply.xyz"
 }

@@ -1,8 +1,9 @@
 {
-  "name": "tipplink",
+  "name": "tiply",
   "author": "Imam Dahir Dan-Azumi",
   "private": true,
   "version": "0.1.0",
+  "description": "tiply - Simple, instant tips for creators. A web app enabling creators to receive tips in USDC instantly via a simple link with no login requirements.",
   "type": "module",
   "scripts": {
     "dev": "vite",

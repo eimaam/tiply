@@ -66,11 +66,9 @@ export function ContactPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <h1 className="text-4xl font-bold tracking-tight text-brand-foreground sm:text-5xl">
-              Get In Touch
-            </h1>
-            <p className="mt-6 text-lg leading-8 text-brand-muted-foreground">
-              Have questions or need help? We're here for you.
+            <h1 className="text-4xl font-bold tracking-tight mb-4">Contact Us</h1>
+            <p className="text-xl text-brand-muted-foreground mb-8">
+              Have questions about tiply? We're here to help!
             </p>
           </motion.div>
           
@@ -105,7 +103,7 @@ export function ContactPage() {
                     id="email"
                     name="email"
                     type="email"
-                    placeholder="tipper@tipplink.xyz"
+                    placeholder="tipper@tiply.xyz"
                     value={formState.email}
                     onChange={handleChange}
                     required
@@ -170,11 +168,11 @@ export function ContactPage() {
                         Email Us
                       </h3>
                       <p className="text-brand-muted-foreground">
-                        support@tipplink.com
+                        support@tiply.xyz
                       </p>
-                      {/* <p className="text-brand-muted-foreground">
-                        partnerships@tipplink.com
-                      </p> */}
+                      <p className="text-brand-muted-foreground">
+                        partnerships@tiply.xyz
+                      </p>
                     </div>
                   </div>
                   

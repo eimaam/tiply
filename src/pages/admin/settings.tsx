@@ -36,19 +36,19 @@ const { TabPane } = Tabs;
 const { Panel } = Collapse;
 
 // Mock settings data
-const mockSettings = {
+const projectSettings = {
   general: {
-    siteName: 'TippLink',
+    siteName: 'tiply',
     siteDescription: 'Instant tips for creators, no login required',
-    contactEmail: 'support@tipplink.io',
-    supportUrl: 'https://support.tipplink.io',
+    contactEmail: 'support@usetiply.xyz',
+    supportUrl: 'https://usetiply.xyz/contact',
     maintenanceMode: false,
     signupsEnabled: true,
     requireEmailVerification: true,
     defaultUserCurrency: 'USD',
     timeZone: 'UTC',
-    termsUrl: 'https://tipplink.io/terms',
-    privacyUrl: 'https://tipplink.io/privacy'
+    termsUrl: 'https://usetiply.xyz/terms',
+    privacyUrl: 'https://usetiply.xyz/privacy',
   },
   payment: {
     processingFee: 2.5,
@@ -78,7 +78,7 @@ const mockSettings = {
   notifications: {
     email: {
       enabled: true,
-      fromEmail: 'noreply@tipplink.io',
+      fromEmail: 'noreply@usetiply.xyz',
       tipReceived: true,
       tipFailed: true,
       newSignup: true,
@@ -102,7 +102,7 @@ const mockSettings = {
 };
 
 const AdminSettingsPage = () => {
-  const [settings, setSettings] = useState(mockSettings);
+  const [settings, setSettings] = useState(projectSettings);
   const [activeTab, setActiveTab] = useState('general');
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -195,7 +195,7 @@ const AdminSettingsPage = () => {
           <div>
             <h2 className="text-2xl font-bold text-brand-foreground">Platform Settings</h2>
             <p className="text-brand-muted-foreground mt-1">
-              Configure global settings that affect the entire TippLink platform
+              Configure global settings that affect the entire tiply platform
             </p>
           </div>
           

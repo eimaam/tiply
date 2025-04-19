@@ -35,12 +35,9 @@ export function Hero() {
           initial="hidden"
           animate="show"
         >
-          <motion.h1 
-            variants={item}
-            className="text-4xl font-bold tracking-tight text-brand-foreground sm:text-6xl"
-          >
-            <span className="text-brand-primary">Support Creators</span> or <span className="text-brand-primary">Get Tipped</span> — Instantly ⚡
-          </motion.h1>
+          <h1 className="text-4xl font-bold tracking-tight text-brand-foreground sm:text-6xl">
+            <span className="text-brand-primary">Support Creators </span> or <span className="text-brand-primary">Receive Tips</span> — Instantly ⚡
+          </h1>
           
           <motion.p 
             variants={item}
@@ -55,7 +52,7 @@ export function Hero() {
             className="mt-10 flex flex-col md:flex-row gap-4 items-center justify-center gap-x-6"
           >
             <Link to="/signup">
-              <Button size="lg">Create Your TippLink</Button>
+              <Button size="lg">Create Your tiply</Button>
             </Link>
             <Button 
               variant="outline" 

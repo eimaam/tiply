@@ -69,7 +69,7 @@ export function OnboardingLayout({
               <span className="text-2xl">{stepInfo?.emoji}</span>
             </div>
             <div>
-              <h1 className="text-xl md:text-3xl font-bold">Set up your TippLink</h1>
+              <h1 className="text-xl md:text-3xl font-bold">Set up your tiply</h1>
               <p className="text-brand-muted-foreground">Step {currentStep + 1}: {stepInfo?.title}</p>
             </div>
           </div>

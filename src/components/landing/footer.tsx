@@ -52,8 +52,10 @@ export function Footer() {
       <div className="mx-auto max-w-7xl overflow-hidden px-6 py-12 sm:py-16 lg:px-8">
         <div className="flex justify-center">
           <Link to="/" className="flex items-center space-x">
-            <img src={logo} alt="Tipp Link Logo" className="h-10 md:h-14 w-auto" />
-            <span className="text-xl font-bold text-brand-primary">TippLink</span>
+            <div className="flex items-center space-x-2">
+              <img src={logo} alt="tiply logo" className="h-6 w-auto" />
+              <span className="text-lg font-semibold">tiply</span>
+            </div>
           </Link>
         </div>
         
@@ -108,7 +110,7 @@ export function Footer() {
         </div>
 
         <p className="mt-8 text-center text-xs leading-5 text-brand-muted-foreground">
-          &copy; {new Date().getFullYear()} TipLink. All rights reserved.
+          &copy; {new Date().getFullYear()} tiply. All rights reserved.
         </p>
       </div>
     </footer>

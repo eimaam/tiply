@@ -205,11 +205,11 @@ export function Onboarding() {
             >
               <RocketOutlined className="text-white text-4xl" />
             </motion.div>
-            <h2 className="text-3xl font-bold mb-3">Your TippLink is Ready! 🎉</h2>
+            <h2 className="text-3xl font-bold mb-3">Your tiply is Ready! 🎉</h2>
             <p className="text-xl mb-3 text-brand-foreground">Start receiving tips now</p>
             
-            <div className="bg-brand-surface/80 backdrop-blur-sm px-4 py-3 rounded-lg border border-brand-border flex items-center justify-center my-6">
-              <span className="text-brand-primary font-medium">tipplink.xyz/@</span>
+            <div className="bg-brand-surface/80 backdrop-blur-sm px-4 py-3 rounded-lg border border-brand-border flex items-center justify-center">
+              <span className="text-brand-primary font-medium">tiply.xyz/@</span>
               <span className="font-bold">
                 {onboardingData.username}
               </span>
@@ -459,14 +459,14 @@ export function Onboarding() {
               </div>
             )}
 
-            {/* Step 7: TippLink Ready */}
+            {/* Step 7: tiply Ready */}
             {currentStep === 6 && (
               <div className="text-center space-y-6">
-                <h2 className="text-3xl font-bold">Your TippLink is Ready! 🎉</h2>
+                <h2 className="text-3xl font-bold">Your tiply is Ready! 🎉</h2>
                 <p className="text-lg text-brand-muted-foreground">Start receiving tips now</p>
 
                 <div className="bg-brand-surface/80 backdrop-blur-sm px-4 py-3 rounded-lg border border-brand-border flex items-center justify-center">
-                  <span className="text-brand-primary font-medium">tipplink.xyz/@</span>
+                  <span className="text-brand-primary font-medium">tiply.xyz/@</span>
                   <span className="font-bold">{onboardingData.username}</span>
                 </div>
 

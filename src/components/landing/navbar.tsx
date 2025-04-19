@@ -106,10 +106,16 @@ export function Navbar() {
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center">
-          <Link to="/" className="flex items-center space-x">
-            <img src={logo} alt="Tipp Link Logo" className="h-8 md:h-12 w-auto" />
-            <span className="text-xl font-bold text-brand-primary">TippLink</span>
-          </Link>
+          <h1 className="flex items-center space-x-3">
+            <a href="/" className="flex items-center">
+              <div className="flex items-center">
+                <img src={logo} alt="tiply Logo" className="h-8 w-auto" />
+              </div>
+              <div className="text-xl font-bold text-brand-foreground hidden md:block">
+                tiply
+              </div>
+            </a>
+          </h1>
         </div>
         
         {/* Desktop Nav */}

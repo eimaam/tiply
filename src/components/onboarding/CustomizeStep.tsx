@@ -49,8 +49,8 @@ export function CustomizeStep({
     <div className="space-y-8">
       <div>
         <OnboardingHeading 
-          title="Customize Your TippLink ✨" 
-          subtitle="Set your default tip preferences and customize your TippLink experience." 
+          title="Customize Your tiply ✨" 
+          subtitle="Set your default tip preferences and customize your tiply experience." 
         />
       </div>
 

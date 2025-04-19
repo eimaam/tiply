@@ -27,9 +27,14 @@ const AboutUsPage = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <h1 className="text-4xl font-bold tracking-tight text-brand-foreground sm:text-6xl mb-6">
-                Our <span className="text-brand-primary">Vision</span> for TippLink
-              </h1>
+              <h1 className="text-4xl font-bold tracking-tight mb-8">About tiply</h1>
+            
+              <div className="prose prose-lg max-w-none">
+                <h2>Our Mission</h2>
+                <p>
+                  At tiply, we believe in empowering creators to monetize their work without friction. We're dedicated to building tools that make it simple for creators to receive support and for fans to show appreciation through micropayments.
+                </p>
+              </div>
               
               <div className="flex justify-center mb-10">
                 <div className="h-1 w-20 bg-brand-primary rounded"></div>
@@ -59,7 +64,7 @@ const AboutUsPage = () => {
                   From Hackathon to Horizon ✨
                 </h2>
                 <p className="text-brand-muted-foreground mb-4">
-                  TippLink began as an ambitious hackathon project with a simple yet powerful idea: what if we could eliminate 
+                  <code>tiply</code> began as an ambitious hackathon project with a simple yet powerful idea: what if we could eliminate 
                   all the friction from supporting digital creators?
                 </p>
                 <p className="text-brand-muted-foreground mb-4">
@@ -81,7 +86,7 @@ const AboutUsPage = () => {
                   >
                     <Image 
                       src={logo} 
-                      alt="TippLink Origins" 
+                      alt="tiply Origins" 
                       className="w-3/4 h-auto transform hover:scale-105 transition-transform"
                       title="Click to enlarge"
                     />
@@ -161,10 +166,10 @@ const AboutUsPage = () => {
             >
               <div>
                 <h2 className="text-3xl font-bold text-brand-foreground mb-6">
-                  The Future of TippLink 🚀
+                  The Future of tiply 🚀
                 </h2>
                 <p className="text-brand-muted-foreground mb-4">
-                  While we're proud of what we've built for the hackathon, our vision extends far beyond. We see TippLink becoming the
+                  While we're proud of what we've built for the hackathon, our vision extends far beyond. We see tiply becoming the
                   universal standard for supporting digital creators in the Web3 era.
                 </p>
                 <p className="text-brand-muted-foreground mb-4">
@@ -256,7 +261,7 @@ const AboutUsPage = () => {
                 Meet the Team 👋
               </h2>
               <p className="mt-4 text-lg text-brand-muted-foreground max-w-2xl mx-auto">
-                The passionate minds behind TippLink
+                The passionate minds behind tiply
               </p>
             </motion.div>
             
@@ -333,7 +338,7 @@ const AboutUsPage = () => {
               </h2>
               <p className="text-lg text-brand-muted-foreground max-w-2xl mx-auto mb-8">
                 Whether you're a creator looking to get supported or a fan wanting to show appreciation,
-                we're building TippLink for you. This is just the beginning.
+                we're building tiply for you. This is just the beginning.
               </p>
               <div className="flex flex-wrap justify-center gap-4">
                 <a href="/signup" className="inline-flex items-center justify-center rounded-md bg-brand-primary px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-brand-primary/90 transition-colors">

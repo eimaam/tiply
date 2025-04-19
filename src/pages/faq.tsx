@@ -11,33 +11,37 @@ const faqCategories = [
     title: 'Getting Started',
     faqs: [
       {
-        question: "How does Tipp Link work?",
-        answer: "Tipp Link provides you with a unique, shareable link that allows you to receive tips in USDC cryptocurrency. Simply share your link on your social profiles or content platforms, and your audience can tip you without any login required."
+        question: "How does tiply work?",
+        answer: "tiply provides you with a unique, shareable link that allows you to receive tips in USDC cryptocurrency. Simply share your link on your social profiles or content platforms, and your audience can tip you without any login required."
       },
       {
-        question: "Do I need cryptocurrency knowledge to use Tipp Link?",
-        answer: "No prior crypto knowledge is required! For both tipper and creator, we've designed Tipp Link to be user-friendly for everyone. The platform handles all the complexity, so you can focus on creating content, receiving tips or giving tips."
+        question: "Do I need cryptocurrency knowledge to use tiply?",
+        answer: "No prior crypto knowledge is required! For both tipper and creator, we've designed tiply to be user-friendly for everyone. The platform handles all the complexity, so you can focus on creating content, receiving tips or giving tips."
       },
       {
-        question: "How do I create my Tipp Link account?",
-        answer: "Sign up with your email address, choose a username for your tipping link, and complete a quick verification. Your unique tipping link will be instantly created and ready to share."
+        question: "How do I create my tiply account?",
+        answer: "Click the 'Get Started' button, follow our simple onboarding process, and you'll have your personalized tip link in minutes. We'll guide you through setting up your wallet and customizing your profile."
       }
     ]
   },
   {
-    title: 'Using Tipp Link',
+    title: 'Using tiply',
     faqs: [
       {
         question: "How do I withdraw my tips?",
         answer: "You can withdraw your tips to any compatible wallet address. Simply connect your wallet or enter your wallet address in your dashboard settings, and transfer your tips with a click of a button."
       },
       {
-        question: "Can I customize my tipping page?",
-        answer: "Yes! You can personalize your tipping page with your profile picture, custom banner, bio, and even theme colors. Premium users have access to more advanced customization options."
+        question: "How do I share my tip link?",
+        answer: "Your unique tip link can be shared anywhere online - social media profiles, video descriptions, newsletters, or your website. Just copy your link and paste it wherever you connect with your audience."
       },
       {
-        question: "Can I see who has tipped me?",
-        answer: "Yes, our dashboard shows you all tip transactions. If tippers choose to provide their name or message, you'll see that information as well."
+        question: "Can I customize how my tip page looks?",
+        answer: "Yes! You can add a profile photo, customize your background, add a short bio, and set suggested tip amounts. Premium users get access to additional customization options including custom branding and themes."
+      },
+      {
+        question: "Do tips expire if not claimed?",
+        answer: "No, tips sent to your account remain there until you withdraw them. There's no expiration date, and you can withdraw your earnings at any time."
       }
     ]
   },
@@ -45,11 +49,11 @@ const faqCategories = [
     title: 'Payments & Security',
     faqs: [
       {
-        question: "Are there any fees for using Tipp Link?",
+        question: "Are there any fees for using tiply?",
         answer: "Our Free plan has minimal processing fees. Premium users enjoy reduced fees and additional features like custom branding and advanced analytics. Check our pricing page for detailed information."
       },
       {
-        question: "Is Tipp Link secure?",
+        question: "Is tiply secure?",
         answer: "Yes, security is our top priority. We implement industry-standard security practices to protect your account and funds. All transactions are processed on secure networks with encryption."
       },
       {
@@ -98,7 +102,7 @@ export function FAQPage() {
               Frequently Asked Questions
             </h1>
             <p className="mt-6 text-lg leading-8 text-brand-muted-foreground">
-              Everything you need to know about Tipp Link
+              Everything you need to know about tiply
             </p>
           </motion.div>
 
