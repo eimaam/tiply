@@ -218,6 +218,7 @@ const AboutUsPage = () => {
                     <li>Subscription model</li>
                     <li>Social media integrations</li>
                     <li>Advanced analytics</li>
+                    <li>Direct bank withdrawals</li>
                   </ul>
                 </motion.div>
                 

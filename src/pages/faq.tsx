@@ -55,6 +55,10 @@ const faqCategories = [
       {
         question: "What happens if someone sends a tip to a wrong address?",
         answer: "Cryptocurrency transactions are irreversible. We recommend double-checking wallet addresses when making transfers. Our system uses checksums to help prevent errors when entering wallet addresses."
+      },
+      {
+        question: "How can I withdraw my earnings to my bank account?",
+        answer: "Currently, withdrawals are made to cryptocurrency wallets only. We're adding direct bank withdrawal functionality in our next update, which will allow creators to transfer their earnings directly to their bank accounts without needing to use a third-party exchange."
       }
     ]
   },
