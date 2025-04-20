@@ -129,7 +129,7 @@ export function Pricing() {
                 <div className="w-full mt-8">
                   <p className="mb-3 text-sm font-medium flex items-center text-brand-primary">
                     <BellOutlined className="mr-1" />
-                    Want early access to TippLink Pro? Join the waitlist 👇
+                    Want early access to tiply Pro? Join the waitlist 👇
                   </p>
                   {!hasSubmitted ? (
                     <form onSubmit={handleWaitlistSubmit} className="space-y-3 w-full">
@@ -151,7 +151,7 @@ export function Pricing() {
                       </div>
                     </form>
                   ) : (
-                    <p className="text-sm text-brand-muted-foreground">Thanks! We'll notify you when TippLink Pro launches.</p>
+                    <p className="text-sm text-brand-muted-foreground">Thanks! We'll notify you when tiply Pro launches.</p>
                   )}
                 </div>
               ) : (

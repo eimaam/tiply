@@ -53,7 +53,7 @@ export const PROJECT_INFO = {
   description: "A decentralized tipping platform for creators and communities.",
   url: "https://usetiply.xyz",
   image: "https://usetiply.xyz/logo.png",
-  twitterUrl: "https://twitter.com/tipplink",
-  repoUrl: "https://github.com/eimaam/tipplink",
+  twitterUrl: "https://twitter.com/tiplyHQ",
+  repoUrl: "https://github.com/eimaam/tiply",
   supportEmail: "support@usetiply.xyz"
 }
