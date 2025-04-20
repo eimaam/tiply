@@ -3,6 +3,7 @@ node_modules
 dist
 coverage
 .vscode
+.DS_Store
 
 # example env files
 .env
