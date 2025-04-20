@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+input,
+textarea,
+select {
+  font-size: 15px;
+}
+
+
+@layer base {
+  :root {
+    --radius: 0.5rem;
+  }
+  
+  /* Base styles that apply to both themes */
+  body {
+    @apply transition-colors duration-200;
+  }
+  
+  /* Simple dark mode styles */
+  
+  .dark {
+    background-color: #121214;
+    color: white !important;
+  }
+  
+  /* Simple light mode styles */
+  .light,
+  .light {
+    background-color: white;
+    color: #5F6C72 !important;
+  }
+  
+  /* Default border color */
+  * {
+    @apply border-[#27272a];
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-in-out;
+}
