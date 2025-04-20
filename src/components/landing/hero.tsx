@@ -118,7 +118,7 @@ export function Hero() {
               <div className="absolute -bottom-20 -left-16 w-40 h-40 bg-brand-accent/20 rounded-full blur-3xl"></div>
               
               <div className="relative p-8">
-                <h3 className="text-2xl font-bold text-brand-foreground mb-2 flex items-center">
+                <h3 className="text-lg md:text-2xl font-bold text-brand-foreground mb-2 flex items-center">
                   <span className="text-brand-primary mr-2">@</span>
                   Claim Your tiply Tag
                 </h3>

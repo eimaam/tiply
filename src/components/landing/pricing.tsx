@@ -2,7 +2,9 @@ import * as React from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
-import { CheckOutlined } from '@ant-design/icons'
+import { Input } from '@/components/ui/input'
+import { CheckOutlined, RocketOutlined, BellOutlined } from '@ant-design/icons'
+import { message } from 'antd'
 
 const plans = [
   {
@@ -17,9 +19,11 @@ const plans = [
     ],
   },
   {
-    name: 'Premium',
-    price: '9',
-    description: 'Advanced features for serious creators',
+    name: 'Pro',
+    price: '5',
+    description: 'Perfect for creators ready to level up',
+    comingSoon: true,
+    earlyAdopterText: 'Launching soon — free forever for early adopters!',
     features: [
       'Everything in Free',
       'Custom branding',
@@ -32,6 +36,23 @@ const plans = [
 ]
 
 export function Pricing() {
+  const [waitlistEmail, setWaitlistEmail] = React.useState<string>('')
+  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false)
+  const [hasSubmitted, setHasSubmitted] = React.useState<boolean>(false)
+
+  const handleWaitlistSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+    
+    // Simulate API call
+    setTimeout(() => {
+      setIsSubmitting(false)
+      setWaitlistEmail('')
+      setHasSubmitted(true)
+      message.success('You\'ve been added to the tiply Pro waitlist!')
+    }, 1000)
+  }
+
   return (
     <section id="pricing" className="py-24 sm:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -58,13 +79,25 @@ export function Pricing() {
           {plans.map((plan) => (
             <div
               key={plan.name}
-              className="flex flex-col justify-between rounded-3xl bg-brand-surface p-8 ring-1 ring-brand-border xl:p-10"
+              className={`flex flex-col justify-between rounded-3xl bg-brand-surface p-8 ring-1 ${plan.comingSoon ? 'ring-brand-primary/30 relative overflow-hidden' : 'ring-brand-border'} xl:p-10`}
             >
+              {plan.comingSoon && (
+                <div className="absolute right-0 top-0">
+                  <div className="bg-brand-primary text-white text-xs px-4 py-1 font-medium transform rotate-45 translate-x-7 translate-y-3">
+                    COMING SOON
+                  </div>
+                </div>
+              )}
               <div>
                 <div className="flex items-center justify-between gap-x-4">
                   <h3 className="text-lg font-semibold leading-8 text-brand-foreground">
                     {plan.name === 'Free' ? `${plan.name} 🌱` : `${plan.name} ⭐️`}
                   </h3>
+                  {plan.comingSoon && (
+                    <span className="inline-flex items-center rounded-md bg-brand-primary/10 px-2 py-1 text-xs font-medium text-brand-primary">
+                      Beta
+                    </span>
+                  )}
                 </div>
                 <p className="mt-4 text-sm leading-6 text-brand-muted-foreground">
                   {plan.description}
@@ -77,6 +110,12 @@ export function Pricing() {
                     /month
                   </span>
                 </p>
+                {plan.earlyAdopterText && (
+                  <p className="mt-2 text-sm text-brand-primary font-medium flex items-center">
+                    <RocketOutlined className="mr-1" />
+                    {plan.earlyAdopterText}
+                  </p>
+                )}
                 <ul role="list" className="mt-8 space-y-3 text-sm leading-6 text-brand-muted-foreground">
                   {plan.features.map((feature) => (
                     <li key={feature} className="flex gap-x-3">
@@ -86,15 +125,46 @@ export function Pricing() {
                   ))}
                 </ul>
               </div>
-              <Link to={`/signup?plan=${plan.name.toLowerCase()}`}>
-                <Button
-                  variant={plan.name === 'Premium' ? 'default' : 'outline'}
-                  className="mt-8 w-full"
-                  size="lg"
-                >
-                  Get {plan.name}
-                </Button>
-              </Link>
+              {plan.comingSoon ? (
+                <div className="w-full mt-8">
+                  <p className="mb-3 text-sm font-medium flex items-center text-brand-primary">
+                    <BellOutlined className="mr-1" />
+                    Want early access to TippLink Pro? Join the waitlist 👇
+                  </p>
+                  {!hasSubmitted ? (
+                    <form onSubmit={handleWaitlistSubmit} className="space-y-3 w-full">
+                      <div className="!w-full flex gap-3">
+                        <Input
+                          type="email"
+                          placeholder="Your email"
+                          value={waitlistEmail}
+                          onChange={(e) => setWaitlistEmail(e.target.value)}
+                          required
+                          className="!w-full"
+                        />
+                        <Button 
+                          htmlType="submit" 
+                          disabled={isSubmitting}
+                        >
+                          {isSubmitting ? 'Joining...' : 'Join Waitlist'}
+                        </Button>
+                      </div>
+                    </form>
+                  ) : (
+                    <p className="text-sm text-brand-muted-foreground">Thanks! We'll notify you when TippLink Pro launches.</p>
+                  )}
+                </div>
+              ) : (
+                <Link to={`/signup?plan=${plan.name.toLowerCase()}`}>
+                  <Button
+                    variant={plan.name === 'Pro' ? 'default' : 'outline'}
+                    className="mt-8 w-full"
+                    size="lg"
+                  >
+                    Get {plan.name}
+                  </Button>
+                </Link>
+              )}
             </div>
           ))}
         </motion.div>

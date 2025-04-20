@@ -108,9 +108,7 @@ export function Navbar() {
         <div className="flex items-center">
           <h1 className="flex items-center space-x-3">
             <a href="/" className="flex items-center">
-              <div className="flex items-center">
-                <img src={logo} alt="tiply Logo" className="h-8 w-auto" />
-              </div>
+                <img src={logo} alt="tiply Logo" className="h-12 w-auto" />
               <div className="text-xl font-bold text-brand-foreground hidden md:block">
                 tiply
               </div>
