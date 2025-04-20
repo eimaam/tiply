@@ -33,6 +33,8 @@ import { ContactPage } from '@/pages/contact';
 import AboutUsPage from '@/pages/about';
 import ProfilePage from '@/pages/profile';
 import EditProfile from '@/pages/profile-edit';
+import WaitlistPage from './pages/waitlist';
+import ErrorPage from './pages/error-page';
 
 // Layout components
 const LandingPage = () => (
@@ -92,45 +94,12 @@ function App() {
     <Router>
       <Routes>
         {/* Public routes */}
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/t/:username" element={<TipPage />} />
-        <Route path="/faq" element={<FAQPage />} />
-        <Route path="/contact" element={<ContactPage />} />
-        <Route path="/about" element={<AboutUsPage />} />
-          
-        {/* Auth routes */}
-        <Route path="/login" element={
-          <AuthLayout>
-            <Login />
-          </AuthLayout>
-        } />
-        <Route path="/signup" element={
-          <AuthLayout>
-            <SignUp />
-          </AuthLayout>
-        } />
-        <Route path="/onboarding" element={
-          <AuthLayout>
-            <Onboarding />
-          </AuthLayout>
-        } />
-
-        {/* User routes - accessible by all authenticated users */}
-        <Route path="/dashboard" element={<ProtectedRoute element={<Dashboard />} requiredRole={UserRole.USER} />} />
-        <Route path="/profile" element={<ProtectedRoute element={<ProfilePage />} requiredRole={UserRole.USER} />} />
-        <Route path="/profile/edit" element={<ProtectedRoute element={<EditProfile />} requiredRole={UserRole.USER} />} />
+        <Route path="/" element={<WaitlistPage />} />
+        <Route path="/waitlist" element={<TipPage />} />
         
-        {/* Admin routes - accessible by admin and superadmin */}
-        <Route path="/admin" element={<ProtectedRoute element={<AdminDashboard />} requiredRole={UserRole.ADMIN} />} />
-        <Route path="/admin/dashboard" element={<ProtectedRoute element={<AdminDashboard />} requiredRole={UserRole.ADMIN} />} />
-        <Route path="/admin/users" element={<ProtectedRoute element={<AdminUsers />} requiredRole={UserRole.ADMIN} />} />
-        <Route path="/admin/transactions" element={<ProtectedRoute element={<AdminTransactions />} requiredRole={UserRole.ADMIN} />} />
-        
-        {/* Superadmin routes - accessible only by superadmin */}
-        <Route path="/admin/settings" element={<ProtectedRoute element={<AdminSettings />} requiredRole={UserRole.SUPER_ADMIN} />} />
-
+       
         {/* Fallback route */}
-        <Route path="*" element={<LandingPage />} />
+        <Route path="*" element={<ErrorPage />} />
       </Routes>
     </Router>
   );
