@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import { notification } from 'antd';
+import { message, notification } from 'antd';
 import { TwitterOutlined, SendOutlined, RocketOutlined, LockOutlined, ThunderboltOutlined, DollarOutlined } from '@ant-design/icons';
 import logo from '../assets/images/tipp-link-logo.png';
 import { PROJECT_INFO } from '@/lib/utils';
@@ -20,7 +20,7 @@ const WaitlistPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email) {
       notification.error({
         message: "Error",
@@ -41,9 +41,15 @@ const WaitlistPage: React.FC = () => {
         message: "Success! 🎉",
         description: "You've been added to our waitlist. We'll notify you when we launch!",
       });
-    } catch (error) {
+    } catch (error:any) {
+        if (error?.response?.status === 409) {
+            return notification.info({
+              message: "You're already in! 🎉",
+              description: "We've got your email already in our waitlist. Stay tuned for the exciting launch! ✨"
+            });
+        }
     notification.error({
-      message: "Error ❌",
+      message: "Error",
       description: "We experienced an error while adding you to the waitlist. Please try again later. 🔄",
     });
     } finally {
