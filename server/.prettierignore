@@ -1,0 +1,19 @@
+# Ignore artifacts:
+build
+dist
+node_modules
+
+# Ignore coverage folder
+coverage
+
+# Ignore specific files
+*.min.js
+*.lock
+*.log
+
+# Ignore configuration files
+*.config.js
+*.config.ts
+
+# Ignore markdown files to prevent formatting issues
+*.md
