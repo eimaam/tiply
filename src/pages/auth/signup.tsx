@@ -57,11 +57,11 @@ export function SignUp() {
           <div className="bg-gradient-to-br from-brand-primary to-brand-accent p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto">
             <WalletOutlined className="text-2xl text-white" />
           </div>
-          <h1 className="text-2xl font-bold">Join TipLink</h1>
+          <h1 className="text-xl md:text-2xl font-bold">Join TipLink</h1>
           <p className="text-brand-muted-foreground">Create an account to start receiving tips</p>
         </motion.div>
 
-        <motion.div variants={itemVariants} className="flex flex-col space-y-4">
+        {/* <motion.div variants={itemVariants} className="flex flex-col space-y-4">
           <Button 
             variant="outline"
             className="border-2 border-brand-border p-6"
@@ -81,7 +81,7 @@ export function SignUp() {
             <span className="flex-shrink mx-4 text-sm text-brand-muted-foreground">or register with email</span>
             <div className="flex-grow border-t border-brand-border"></div>
           </div>
-        </motion.div>
+        </motion.div> */}
 
         <motion.form 
           variants={itemVariants}

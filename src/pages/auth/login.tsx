@@ -61,7 +61,7 @@ export function Login() {
           <p className="text-brand-muted-foreground">Access your account to manage your tips</p>
         </motion.div>
 
-        <motion.div variants={itemVariants} className="flex flex-col space-y-4">
+        {/* <motion.div variants={itemVariants} className="flex flex-col space-y-4">
           <Button 
             variant="outline"
             className="border-2 border-brand-border p-6"
@@ -81,7 +81,7 @@ export function Login() {
             <span className="flex-shrink mx-4 text-sm text-brand-muted-foreground">or continue with email</span>
             <div className="flex-grow border-t border-brand-border"></div>
           </div>
-        </motion.div>
+        </motion.div> */}
 
         <motion.form 
           variants={itemVariants}
