@@ -1,6 +1,7 @@
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { motion } from 'framer-motion';
+import { TransactionStatusEnum } from '@/types/transaction';
 
 export interface TransactionCardProps {
   id: string | number;
@@ -9,7 +10,7 @@ export interface TransactionCardProps {
   details: string;
   timestamp: string;
   amount?: number;
-  status?: 'completed' | 'pending' | 'failed';
+  status?: TransactionStatusEnum;
   currency?: string;
   onClick?: () => void;
   className?: string;

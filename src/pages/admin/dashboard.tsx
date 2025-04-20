@@ -24,6 +24,7 @@ import { MetricCard } from '@/components/ui/dashboard/MetricCard';
 import { DashboardCard } from '@/components/ui/dashboard/DashboardCard';
 import { BarChart, ChartData } from '@/components/ui/dashboard/BarChart';
 import { TransactionCard } from '@/components/ui/dashboard/TransactionCard';
+import { TransactionStatusEnum } from '@/types/transaction';
 
 // Original mock data - we'll use this as base data before filtering
 const originalOverviewStats = {
@@ -38,8 +39,22 @@ const originalOverviewStats = {
   pendingTransactions: 8
 };
 
+// Define monthly data type
+type MonthDataType = {
+  totalRevenue: number;
+  totalUsers: number;
+  activeUsers: number;
+  totalTips: number;
+  averageTipAmount: number;
+  pendingTransactions: number;
+};
+
+type MonthlyDataType = {
+  [key: string]: MonthDataType;
+};
+
 // Monthly data for historical filtering
-const monthlyData = {
+const monthlyData: MonthlyDataType = {
   '2025-04': { totalRevenue: 87652.50, totalUsers: 4320, activeUsers: 2876, totalTips: 15940, averageTipAmount: 28.50, pendingTransactions: 8 },
   '2025-03': { totalRevenue: 78920.30, totalUsers: 4100, activeUsers: 2700, totalTips: 14200, averageTipAmount: 27.30, pendingTransactions: 12 },
   '2025-02': { totalRevenue: 65420.75, totalUsers: 3850, activeUsers: 2500, totalTips: 12500, averageTipAmount: 26.80, pendingTransactions: 15 },
@@ -351,7 +366,7 @@ const AdminDashboardPage = () => {
   };
 
   // Format large numbers with commas
-  const formatNumber = (num) => {
+  const formatNumber = (num: number): string => {
     return num.toLocaleString('en-US');
   };
 
@@ -487,7 +502,7 @@ const AdminDashboardPage = () => {
                       details={activity.details}
                       timestamp={activity.timestamp}
                       amount={activity.amount}
-                      status={activity.status}
+                      status={activity.status as TransactionStatusEnum}
                       currency="USDC"
                       showActionButton={true}
                       actionButtonText="Details"

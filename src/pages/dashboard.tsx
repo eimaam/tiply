@@ -26,6 +26,7 @@ import { BarChart, ChartData } from '@/components/ui/dashboard/BarChart';
 import { TransactionCard } from '@/components/ui/dashboard/TransactionCard';
 import { Withdrawal } from '@/components/wallet/Withdrawal';
 import { message } from 'antd';
+import { TransactionStatusEnum } from '@/types/transaction';
 
 // Set current user's premium status for demo purposes
 const USER_IS_PREMIUM = false;
@@ -421,7 +422,7 @@ export function Dashboard() {
 
   // Reset filters
   const resetFilters = () => {
-    const defaultFilters = {
+    const defaultFilters: DataFilterType = {
       searchQuery: '',
       startDate: undefined,
       endDate: undefined,
@@ -609,7 +610,7 @@ export function Dashboard() {
                         timestamp={tip.timestamp}
                         amount={tip.amount}
                         currency={tip.tokenType}
-                        status="completed"
+                        status={TransactionStatusEnum.COMPLETED}
                       />
                     ))
                   ) : (
