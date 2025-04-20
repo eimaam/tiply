@@ -1,7 +1,9 @@
+import dotenv from 'dotenv';
+// Load environment variables
+dotenv.config();
 import express, { Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import { globalRateLimiter } from './middleware/rate-limit.middleware';
 import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
@@ -10,8 +12,6 @@ import transactionRoutes from './routes/transaction.routes';
 import waitlistRoutes from './routes/waitlist.routes';
 import { connectDB } from './config/database';
 
-// Load environment variables
-dotenv.config();
 
 // Initialize express app
 const app = express();
