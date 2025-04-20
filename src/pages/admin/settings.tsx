@@ -21,7 +21,8 @@ import {
   ExclamationCircleOutlined,
   ApiOutlined,
   CodeOutlined,
-  DesktopOutlined
+  DesktopOutlined,
+  MailOutlined
 } from '@ant-design/icons';
 import { notification, Tabs, Switch, Tooltip, Collapse } from 'antd';
 import { 
@@ -110,7 +111,15 @@ const AdminSettingsPage = () => {
   const [activeAccordions, setActiveAccordions] = useState(['general-basic']);
 
   // Handle settings changes
-  const handleSettingChange = (category, key, value) => {
+  // Handle settings changes
+  const handleSettingChange = <
+    C extends keyof typeof settings,
+    K extends keyof typeof settings[C]
+  >(
+    category: C,
+    key: K,
+    value: typeof settings[C][K]
+  ) => {
     setSettings(prev => ({
       ...prev,
       [category]: {
@@ -122,7 +131,16 @@ const AdminSettingsPage = () => {
   };
 
   // Handle nested settings changes
-  const handleNestedSettingChange = (category, nested, key, value) => {
+  const handleNestedSettingChange = <
+    C extends keyof typeof settings,
+    N extends keyof typeof settings[C],
+    K extends keyof typeof settings[C][N]
+  >(
+    category: C,
+    nested: N,
+    key: K,
+    value: typeof settings[C][N][K]
+  ) => {
     setSettings(prev => ({
       ...prev,
       [category]: {
@@ -843,7 +861,9 @@ const AdminSettingsPage = () => {
                     header={
                       <div className="flex items-center">
                         <MailOutlined className="mr-2 text-brand-primary" />
-                        <span className="font-medium">Email Notifications</span>
+                        <span className="font-medium">
+                          Email Notifications
+                          </span>
                       </div>
                     } 
                     key="notifications-email"

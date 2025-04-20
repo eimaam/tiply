@@ -8,7 +8,7 @@ export interface NotificationTriggerProps extends Omit<NotificationPanelProps, '
   buttonClassName?: string;
   panelClassName?: string;
   buttonVariant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
-  buttonSize?: 'default' | 'sm' | 'lg' | 'icon';
+  buttonSize?: 'sm' | 'lg' | 'icon' | 'md';
 }
 
 export const NotificationTrigger: React.FC<NotificationTriggerProps> = ({
@@ -24,7 +24,7 @@ export const NotificationTrigger: React.FC<NotificationTriggerProps> = ({
   buttonClassName = '',
   panelClassName = '',
   buttonVariant = 'ghost',
-  buttonSize = 'icon',
+  buttonSize = 'md',
 }) => {
   const [isOpen, setIsOpen] = React.useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
