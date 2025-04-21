@@ -5,10 +5,6 @@ import express, { Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import { globalRateLimiter } from './middleware/rate-limit.middleware';
-import authRoutes from './routes/auth.routes';
-import userRoutes from './routes/user.routes';
-import rolesRoutes from './routes/roles.routes';
-import transactionRoutes from './routes/transaction.routes';
 import waitlistRoutes from './routes/waitlist.routes';
 import { connectDB } from './config/database';
 
@@ -26,10 +22,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(globalRateLimiter);
 
 // API Routes
-app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/users', userRoutes);
-app.use('/api/v1/admin', rolesRoutes);
-app.use('/api/v1/transactions', transactionRoutes);
 app.use('/api/v1/waitlist', waitlistRoutes);
 
 // Health check route
