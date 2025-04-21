@@ -88,7 +88,7 @@ const WaitlistPage: React.FC = () => {
       {/* Left Section - Hero/Branding */}
       <Container
         height="auto"
-        className="h-[50vh] md:h-screen w-full bg-gradient-to-br from-brand-primary/20 to-brand-accent/20 p-8 md:p-12 flex items-center justify-center relative overflow-hidden"
+        className="h-full md:h-screen w-full bg-gradient-to-br from-brand-primary/20 to-brand-accent/20 p-8 md:p-12 flex items-center justify-center relative"
       >
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden">
           <div className="absolute top-10 right-10 w-80 h-80 bg-brand-primary/20 rounded-full blur-3xl"></div>
