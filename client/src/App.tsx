@@ -95,7 +95,7 @@ function App() {
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<WaitlistPage />} />
-        <Route path="/waitlist" element={<TipPage />} />
+        <Route path="/waitlist" element={<WaitlistPage />} />
         
        
         {/* Fallback route */}
