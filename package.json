@@ -1,0 +1,22 @@
+{
+    "name": "tiply",
+    "version": "1.0.0",
+    "description": "tiply - Simple, instant tips for creators. A web app enabling creators to receive tips in USDC instantly via a simple link with no login requirements.",
+    "main": "index.js",
+    "scripts": {
+      "client": "cd client && npm run dev",
+      "server": "cd server && npm run dev",
+      "dev": "concurrently \"npm run client\" \"npm run server\"",
+      "setup": "npm install && cd client && npm install && cd ../server && npm install"
+    },
+    "keywords": [
+        "tiply", "Support Creators", "Receive Tips", "Get Tipped", "Instant Payments", "No Logins"
+    ],
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+      "concurrently": "^8.2.0"
+    },
+    "dependencies": {
+    }
+  }
