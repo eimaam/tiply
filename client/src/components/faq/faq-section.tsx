@@ -2,27 +2,30 @@ import * as React from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { RightOutlined } from '@ant-design/icons'
+import { RightOutlined, DownOutlined, UpOutlined } from '@ant-design/icons'
+import { Collapse } from 'antd'
+
+const { Panel } = Collapse;
 
 const faqs = [
   {
-    question: "How does Tipp Link work?",
-    answer: "Tipp Link provides you with a unique, shareable link that allows you to receive tips in USDC cryptocurrency. Simply share your link on your social profiles or content platforms, and your audience can tip you without any login required."
+    question: "How does tiply work?",
+    answer: "tiply provides you with a unique, shareable link that allows you to receive tips in USDC cryptocurrency. Simply share your link on your social profiles or content platforms, and your audience can tip you without any login required."
   },
   {
-    question: "Do I need cryptocurrency knowledge to use Tipp Link?",
-    answer: "No prior crypto knowledge is required! For both tipper and creator, we've designed Tipp Link to be user-friendly for everyone. The platform handles all the complexity, so you can focus on creating content, receiving tips or giving tips."
+    question: "Do I need cryptocurrency knowledge to use tiply?",
+    answer: "No prior crypto knowledge is required! For both tipper and creator, we've designed tiply to be user-friendly for everyone. The platform handles all the complexity, so you can focus on creating content, receiving tips or giving tips."
   },
   {
     question: "How do I withdraw my tips?",
     answer: "You can withdraw your tips to any compatible wallet address. Simply connect your wallet or enter your wallet address in your dashboard settings, and transfer your tips with a click of a button."
   },
   {
-    question: "Are there any fees for using Tipp Link?",
-    answer: "Our Free plan has minimal processing fees. Premium users enjoy reduced fees and additional features like custom branding and advanced analytics. Check our pricing page for detailed information."
+    question: "Are there any fees for using tiply?",
+    answer: "No, tips sent to your account remain there until you withdraw them. There's no expiration date, and you can withdraw your earnings at any time."
   },
   {
-    question: "Is Tipp Link secure?",
+    question: "Is tiply secure?",
     answer: "Yes, security is our top priority. We implement industry-standard security practices to protect your account and funds. All transactions are processed on secure networks with encryption."
   },
 ]
@@ -51,25 +54,31 @@ export function FAQSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
-          <dl className="space-y-8">
+          <Collapse 
+            bordered={false}
+            expandIconPosition="end"
+            className="bg-transparent"
+            expandIcon={({ isActive }) => (
+              isActive ? <UpOutlined className="text-brand-primary" /> : <DownOutlined className="text-brand-muted-foreground" />
+            )}
+          >
             {faqs.map((faq, index) => (
-              <motion.div
+              <Panel
                 key={index}
-                className="rounded-lg bg-brand-surface p-6 ring-1 ring-brand-border"
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                viewport={{ once: true }}
+                header={
+                  <span className="text-lg font-semibold leading-7 text-brand-foreground">
+                    {faq.question}
+                  </span>
+                }
+                className="mb-4 rounded-lg bg-brand-surface ring-1 ring-brand-border hover:bg-brand-surface/80 transition-colors"
               >
-                <dt className="text-lg font-semibold leading-7 text-brand-foreground">
-                  {faq.question}
-                </dt>
-                <dd className="mt-4 text-base leading-7 text-brand-muted-foreground">
+                <div className="text-base leading-7 text-brand-muted-foreground pb-2">
                   {faq.answer}
-                </dd>
-              </motion.div>
+                </div>
+              </Panel>
             ))}
-          </dl>
+          </Collapse>
+          
           <div className="mt-10 flex justify-center">
             <Link to="/faq">
               <Button variant="outline" className="flex items-center gap-2">

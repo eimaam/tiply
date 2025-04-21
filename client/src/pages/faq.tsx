@@ -1,10 +1,11 @@
 import * as React from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Navbar } from '@/components/landing/navbar'
 import { Footer } from '@/components/landing/footer'
-import { QuestionCircleOutlined, RightOutlined } from '@ant-design/icons'
+import { QuestionCircleOutlined, RightOutlined, DownOutlined, UpOutlined } from '@ant-design/icons'
+import { cn } from '@/lib/utils'
 
 const faqCategories = [
   {
@@ -85,9 +86,47 @@ const faqCategories = [
   }
 ]
 
+const FAQItem = ({ question, answer }: { question: string; answer: string }) => {
+  const [isOpen, setIsOpen] = React.useState(false);
+  
+  return (
+    <motion.div 
+      className="mb-4 overflow-hidden rounded-lg bg-brand-surface ring-1 ring-brand-border hover:bg-brand-surface/80 transition-colors"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+    >
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full px-6 py-4 text-left flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand-primary"
+        aria-expanded={isOpen}
+      >
+        <span className="text-lg font-semibold text-brand-foreground">{question}</span>
+        <span className="text-brand-primary">
+          {isOpen ? <UpOutlined /> : <DownOutlined />}
+        </span>
+      </button>
+      
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="overflow-hidden"
+          >
+            <div className="px-6 pb-6 text-base leading-7 text-brand-muted-foreground">
+              {answer}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+};
+
 export function FAQPage() {
   return (
-    
     <div className="min-h-screen bg-brand-background">
       <Navbar />
       
@@ -119,22 +158,13 @@ export function FAQPage() {
                   <QuestionCircleOutlined className="text-brand-primary" /> {category.title}
                 </h2>
                 
-                <div className="space-y-6">
+                <div className="space-y-4">
                   {category.faqs.map((faq, faqIndex) => (
-                    <motion.div
+                    <FAQItem 
                       key={faqIndex}
-                      className="rounded-lg bg-brand-surface p-6 ring-1 ring-brand-border"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: (categoryIndex * 0.1) + (faqIndex * 0.05) }}
-                    >
-                      <dt className="text-lg font-semibold leading-7 text-brand-foreground">
-                        {faq.question}
-                      </dt>
-                      <dd className="mt-4 text-base leading-7 text-brand-muted-foreground">
-                        {faq.answer}
-                      </dd>
-                    </motion.div>
+                      question={faq.question}
+                      answer={faq.answer}
+                    />
                   ))}
                 </div>
               </motion.div>

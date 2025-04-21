@@ -9,8 +9,8 @@ const config: Config = {
     extend: {
       screens: {
         sm: { max: '820px' },
-        md: { min: '820px' },
-        lg: { min: '1510px' },
+        md: { min: '1000px' },
+        lg: { min: '1310px' },
       },
       fontFamily: {
         sans: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
