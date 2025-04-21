@@ -20,3 +20,6 @@ yarn-error.log*
 
 # github files
 .github
+
+# ignore app.tsx and routes update till project is ready to allow for waitlist only
+/src/App.tsx
