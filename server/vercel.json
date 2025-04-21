@@ -3,19 +3,14 @@
   "name": "tiply-backend",
   "builds": [
     {
-      "src": "dist/index.ts",
-      "use": "@vercel/node",
-      "config": { "includeFiles": ["dist/**"] }
+      "src": "src/index.ts",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
     {
-      "src": "/api/v1/(.*)",
-      "dest": "dist/index.ts"
-    },
-    {
       "src": "/(.*)",
-      "dest": "dist/$1"
+      "dest": "src/index.ts"
     }
   ],
   "env": {
