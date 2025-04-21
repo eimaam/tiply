@@ -7,6 +7,11 @@ const config: Config = {
   darkMode: 'class',
   theme: {
     extend: {
+      screens: {
+        sm: { max: '820px' },
+        md: { min: '820px' },
+        lg: { min: '1510px' },
+      },
       fontFamily: {
         sans: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
         spaceGrotesk: ['"Space Grotesk"', 'sans-serif'],
