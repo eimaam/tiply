@@ -190,13 +190,14 @@ export const responseHandler = {
    *
    * @param res Express Response object
    * @param message Message to send in the response
-   * @param data Optional data to send in the response
+   * @param error Optional data to send in the response
    */
-  badRequest: (res: Response, message: string) => {
+  badRequest: (res: Response, message: string, error?: any) => {
     sendError({
       res,
       message,
       statusCode: 400,
+      error,
     });
   },
   /**

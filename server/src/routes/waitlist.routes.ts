@@ -1,7 +1,8 @@
 import express from 'express';
 import WaitlistController from '../controllers/WaitlistController';
-import { authenticate, hasRole } from '../middleware/auth.middleware';
-import { UserRole } from '../types/user.types';
+import { authenticate, hasRole, withAuth } from '../middleware/auth.middleware';
+import { UserRoleEnum } from '../types/user.types';
+
 
 const router = express.Router();
 
@@ -9,6 +10,10 @@ const router = express.Router();
 router.post('/', WaitlistController.joinWaitlist);
 
 // Protected route - only admins can view the waitlist
-router.get('/', authenticate, hasRole([UserRole.SUPER_ADMIN, UserRole.ADMIN]), WaitlistController.getWaitlist);
+router.get('/', 
+  authenticate, 
+  hasRole([UserRoleEnum.SUPER_ADMIN, UserRoleEnum.ADMIN]), 
+  withAuth(WaitlistController.getWaitlist)
+);
 
 export default router;
