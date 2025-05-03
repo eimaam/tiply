@@ -1,29 +1,29 @@
-import mongoose, { Document, Schema } from 'mongoose';
-import bcrypt from 'bcrypt';
-import { IRole } from './Role';
+import mongoose, { Document, Schema } from "mongoose";
+import bcrypt from "bcrypt";
+import { UserRoleEnum } from "../types/user.types";
 
 /**
  * User Status Enum
  */
 export enum UserStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  SUSPENDED = 'suspended',
-  PENDING = 'pending',
-  BANNED = 'banned',
-  LOCKED = 'locked',
+  ACTIVE = "active",
+  INACTIVE = "inactive",
+  SUSPENDED = "suspended",
+  PENDING = "pending",
+  BANNED = "banned",
+  LOCKED = "locked",
 }
 
 /**
  * Onboarding Step Enum
  */
 export enum OnboardingStep {
-  USERNAME = 'username',
-  PROFILE = 'profile',
-  AVATAR = 'avatar',
-  WALLET = 'wallet',
-  CUSTOMIZE = 'customize',
-  COMPLETE = 'complete'
+  USERNAME = "username",
+  PROFILE = "profile",
+  AVATAR = "avatar",
+  WALLET = "wallet",
+  CUSTOMIZE = "customize",
+  COMPLETE = "complete",
 }
 
 /**
@@ -67,6 +67,14 @@ export interface IProfileCustomization {
 }
 
 /**
+ * Interface for User Permission
+ */
+export interface IPermission {
+  slug: string;
+  module: string;
+}
+
+/**
  * Interface for User document
  */
 export interface IUser extends Document {
@@ -77,9 +85,9 @@ export interface IUser extends Document {
   bio?: string;
   avatarUrl?: string;
   coverImageUrl?: string;
-  walletAddress?: string;
   status: UserStatus;
-  roles: mongoose.Types.ObjectId[] | IRole[];
+  role: UserRoleEnum; // Primary role (for categorization)
+  permissions: string[]; // Direct permission slugs
   socialLinks?: ISocialLinks;
   customization?: IProfileCustomization;
   onboardingCompleted: boolean;
@@ -97,7 +105,15 @@ export interface IUser extends Document {
   isFeatured: boolean;
   createdAt: Date;
   updatedAt: Date;
+  // circle
+  circleWalletId?: string;
+  walletAddress?: string;
+  // refresh token management
+  refreshTokens?: string[]; // Store active refresh token hashes
+  refreshTokensExpiry?: Date[]; // Store expiration dates for refresh tokens
+  // methods
   comparePassword(candidatePassword: string): Promise<boolean>;
+  hasPermission(permissionSlug: string): boolean;
 }
 
 /**
@@ -107,13 +123,16 @@ const UserSchema = new Schema<IUser>(
   {
     username: {
       type: String,
-      required: true,
       unique: true,
+      sparse: true,
       trim: true,
       lowercase: true,
       minlength: 3,
       maxlength: 20,
-      match: [/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores'],
+      match: [
+        /^[a-zA-Z0-9_]+$/,
+        "Username can only contain letters, numbers, and underscores",
+      ],
     },
     email: {
       type: String,
@@ -121,7 +140,7 @@ const UserSchema = new Schema<IUser>(
       unique: true,
       trim: true,
       lowercase: true,
-      match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email address'],
+      match: [/^\S+@\S+\.\S+$/, "Please enter a valid email address"],
     },
     password: {
       type: String,
@@ -145,19 +164,22 @@ const UserSchema = new Schema<IUser>(
       type: String,
       trim: true,
     },
-    walletAddress: {
-      type: String,
-      trim: true,
-    },
     status: {
       type: String,
       enum: Object.values(UserStatus),
       default: UserStatus.PENDING,
     },
-    roles: [{
-      type: Schema.Types.ObjectId,
-      ref: 'Role',
-    }],
+    role: {
+      type: String,
+      enum: Object.values(UserRoleEnum),
+      default: UserRoleEnum.CREATOR,
+    },
+    permissions: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
     socialLinks: {
       twitter: String,
       instagram: String,
@@ -176,11 +198,13 @@ const UserSchema = new Schema<IUser>(
       customCss: String,
       showTipCounter: { type: Boolean, default: true },
       enableCustomMessage: { type: Boolean, default: true },
-      tipOptions: [{
-        amount: { type: Number, required: true },
-        label: String,
-        isDefault: { type: Boolean, default: false },
-      }],
+      tipOptions: [
+        {
+          amount: { type: Number, required: true },
+          label: String,
+          isDefault: { type: Boolean, default: false },
+        },
+      ],
       minimumTipAmount: { type: Number, default: 1 },
       allowCustomAmounts: { type: Boolean, default: true },
       receiveNotes: { type: Boolean, default: true },
@@ -217,6 +241,22 @@ const UserSchema = new Schema<IUser>(
       type: Boolean,
       default: false,
     },
+    circleWalletId: { type: String, default: null },
+    walletAddress: {
+      type: String,
+      trim: true,
+    },
+    refreshTokens: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+    refreshTokensExpiry: [
+      {
+        type: Date,
+      },
+    ],
   },
   {
     timestamps: true,
@@ -228,12 +268,13 @@ UserSchema.index({ username: 1 });
 UserSchema.index({ email: 1 });
 UserSchema.index({ walletAddress: 1 });
 UserSchema.index({ status: 1 });
+UserSchema.index({ role: 1 });
 UserSchema.index({ isFeatured: 1, status: 1 });
 
 // Pre-save hook to hash password
-UserSchema.pre('save', async function (next) {
+UserSchema.pre("save", async function (next) {
   // Only hash the password if it's modified (or new)
-  if (!this.isModified('password')) return next();
+  if (!this.isModified("password")) return next();
 
   try {
     // Generate a salt and hash the password
@@ -246,8 +287,16 @@ UserSchema.pre('save', async function (next) {
 });
 
 // Method to compare passwords
-UserSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
+UserSchema.methods.comparePassword = async function (
+  candidatePassword: string
+): Promise<boolean> {
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-export const UserModel = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
+// Method to check if user has a specific permission
+UserSchema.methods.hasPermission = function (permissionSlug: string): boolean {
+  return this.permissions.includes(permissionSlug);
+};
+
+export const UserModel =
+  mongoose.models.User || mongoose.model<IUser>("User", UserSchema);

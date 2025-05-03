@@ -47,11 +47,18 @@ export interface User {
   status: UserStatus;
   bio?: string;
   avatarUrl?: string;
+  coverImageUrl?: string;
   walletAddress?: string;
+  circleWalletId?: string;
   socialLinks?: SocialLinks;
   customization?: ProfileCustomization;
   onboardingCompleted: boolean;
   currentOnboardingStep?: OnboardingStep;
+  permissions: string[];
+  emailVerified: boolean;
+  isVerified: boolean;
+  isFeatured: boolean;
+  lastLogin?: Date;
   createdAt: Date;
   updatedAt: Date;
 }

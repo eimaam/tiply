@@ -5,26 +5,37 @@
 import { UserStatus, OnboardingStep } from '../models/User';
 import { Request } from 'express';
 
-// Pre-defined role types that match our database
-export enum UserRole {
-  USER = 'user',
+/**
+ * User Role Enum
+ */
+export enum UserRoleEnum {
   CREATOR = 'creator',
   SUPPORT = 'support',
   ADMIN = 'admin',
-  SUPER_ADMIN = 'super_admin'
+  SUPER_ADMIN = 'super_admin',
 }
 
 // JWT payload structure
 export interface JwtPayload {
   userId: string;
   email: string;
-  roles: string[];
-  permissions?: string[];
+  role: UserRoleEnum; 
+  permissions: string[];
+  tokenType?: 'access' | 'refresh'; // Indicate token type
 }
 
-// New AuthenticatedRequest type to use after authentication
+// Extend Express Request interface to include user property
+declare global {
+  namespace Express {
+    interface Request {
+      user?: JwtPayload;
+    }
+  }
+}
+
+// For backward compatibility
 export interface AuthenticatedRequest extends Request {
-  user: JwtPayload; // Note: Not optional - guaranteed to exist
+  user: JwtPayload; 
 }
 
 // Login request body
@@ -35,16 +46,19 @@ export interface LoginRequest {
 
 // Register request body
 export interface RegisterRequest {
-  username: string;
   email: string;
   password: string;
-  displayName?: string;
+}
+
+// Refresh token request body
+export interface TokenRefreshRequest {
+  refreshToken?: string; // Optional since we'll primarily use cookies
 }
 
 // User response sent to client (excludes sensitive fields)
 export interface UserResponse {
   id: string;
-  username: string;
+  username?: string;
   email: string;
   displayName?: string;
   bio?: string;
@@ -52,8 +66,8 @@ export interface UserResponse {
   coverImageUrl?: string;
   walletAddress?: string;
   status: UserStatus;
-  roles: string[];
-  permissions?: string[];
+  role: UserRoleEnum;
+  permissions: string[];
   socialLinks?: Record<string, string>;
   customization?: Record<string, any>;
   onboardingCompleted: boolean;
@@ -66,8 +80,10 @@ export interface UserResponse {
 
 // Auth response containing token and user data
 export interface AuthResponse {
-  token: string;
-  expiresIn: number;
+  accessToken?: string; // Optional as we'll use cookies primarily
+  refreshToken?: string; // Optional as we'll use cookies primarily
+  accessExpiresIn: string;
+  refreshExpiresIn: string;
   user: UserResponse;
 }
 
@@ -77,9 +93,8 @@ export interface PermissionCheckRequest {
   requireAll?: boolean; // If true, user must have ALL permissions, otherwise ANY is sufficient
 }
 
-// Role-based access control check function type
-export type RolePermissionCheck = (
-  roles: string[],
-  permissions: string[],
-  requireAllPermissions?: boolean
-) => boolean;
+// Token response for refresh endpoints
+export interface TokenResponse {
+  accessToken?: string;
+  accessExpiresIn: string;
+}

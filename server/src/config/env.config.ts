@@ -16,6 +16,8 @@ const DATABASE = {
 const JWT = {
   SECRET: process.env.JWT_SECRET as string,
   EXPIRY: (process.env.JWT_EXPIRY as string) || "7d",
+  REFRESH_SECRET: process.env.JWT_REFRESH_SECRET as string,
+  REFRESH_EXPIRY: (process.env.JWT_REFRESH_EXPIRY as string) || "30d",
 };
 
 // circle
