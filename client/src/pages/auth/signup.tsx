@@ -1,14 +1,14 @@
 import * as React from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { MailOutlined, LockOutlined, UserOutlined } from '@ant-design/icons'
 import { Form, message } from 'antd'
+import { useUser } from '@/contexts/UserContext'
 
 export function SignUp() {
-  const navigate = useNavigate()
-  const [loading, setLoading] = React.useState(false)
+  const { register, isLoading } = useUser()
   const [form] = Form.useForm()
   
   // Animation variants
@@ -28,33 +28,20 @@ export function SignUp() {
   }
 
   const handleSubmit = async (values: any) => {
-    try {
-      setLoading(true)
-      
       // Validate passwords match
       if (values.password !== values.confirmPassword) {
         message.error('Passwords do not match')
-        setLoading(false)
         return
       }
+
+      await register({
+        email: values.email,
+        password: values.password,
+        username: values.email.split('@')[0], // Use part of email as temporary username
+      })
       
-      // This would be an API call in production
-      // const response = await api.auth.register({
-      //   email: values.email,
-      //   password: values.password
-      // })
-      
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      
-      message.success('Account created successfully!')
-      navigate('/onboarding')
-    } catch (error) {
-      message.error('Failed to create account. Please try again.')
-      console.error(error)
-    } finally {
-      setLoading(false)
-    }
+      // Note: No need to handle navigation manually
+      // The UserContext register function will handle it
   }
 
   return (
@@ -142,7 +129,7 @@ export function SignUp() {
               htmlType="submit"
               className="w-full" 
               size="lg"
-              loading={loading}
+              loading={isLoading}
             >
               Create Account
             </Button>
