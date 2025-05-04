@@ -4,15 +4,17 @@ import rateLimit, {
   RateLimitExceededEventHandler,
 } from "express-rate-limit";
 import { Request, Response, NextFunction, RequestHandler } from "express";
+import { NodeEnv } from "../config/env.config";
 
 /**
  * Default rate limiter options
  */
 const defaultRateLimitOptions: Partial<Options> = {
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: NodeEnv === "development" ? Infinity :  100, // limit each IP to 100 requests per windowMs in production 
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  skip: (req) => NodeEnv === "development", // Skip rate limiting in development mode
   message: {
     success: false,
     message: "Too many requests, please try again later.",

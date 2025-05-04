@@ -20,12 +20,24 @@ const PORT = process.env.PORT || 3000;
 
 // Configure CORS to allow credentials
 const corsOptions = {
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    const allowedOrigins = [
+      process.env.CLIENT_URL || 'http://localhost:5173',
+      'https://usetiply.xyz',
+      'https://www.usetiply.xyz'
+    ];
+    
+    // Allow requests with no origin (like mobile apps, curl requests, etc)
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS 🔒'));
+    }
+  },
   credentials: true, // Allow cookies to be sent with requests
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 };
-
 // Middleware
 app.use(cors(corsOptions));
 app.use(express.json());

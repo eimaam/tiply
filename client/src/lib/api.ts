@@ -1,4 +1,5 @@
 import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
+import { PUBLIC_ROUTES } from './utils';
 
 // Flag to prevent multiple refresh token requests
 let isRefreshing = false;
@@ -15,7 +16,7 @@ export const publicApi = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, // Include cookies in requests
+  withCredentials: true, // Include cookies in all requests to handle HttpOnly cookies
 });
 
 // Private API - for authenticated requests
@@ -25,7 +26,7 @@ export const privateApi = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, 
+  withCredentials: true, // Include cookies in requests
 });
 
 // Subscribe to token refresh
@@ -42,7 +43,7 @@ const onTokenRefreshed = (newToken: string) => {
 // Function to handle refresh token
 const refreshAccessToken = async () => {
   try {
-    const response = await publicApi.post('/auth/refresh');
+    const response = await publicApi.post('/auth/refresh', {}, { withCredentials: true });
     return response.data;
   } catch (error) {
     console.error('Failed to refresh token:', error);
@@ -50,10 +51,10 @@ const refreshAccessToken = async () => {
     localStorage.removeItem('hasSession');
     
     // Only redirect to login if we're not already on a public route
-    const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
+    
     const currentPath = window.location.pathname;
     
-    if (!publicRoutes.some(route => currentPath.startsWith(route))) {
+    if (!PUBLIC_ROUTES.some(route => currentPath.startsWith(route))) {
       window.location.href = '/login';
     }
     return Promise.reject(error);
@@ -65,6 +66,8 @@ const refreshAccessToken = async () => {
 // Request interceptor for private API
 privateApi.interceptors.request.use(
   (config) => {
+    // Always ensure cookies are sent with the request
+    config.withCredentials = true;
     return config;
   },
   (error: AxiosError) => {
@@ -84,7 +87,8 @@ const responseInterceptor = (response: AxiosResponse) => {
 
 const errorInterceptor = async (error: AxiosError) => {
   const { response, config } = error;
-
+console.log({ response })
+console.log({ isRefreshing})
   // Handle token expiration
   if (response?.status === 401 && 
       response.data && 
@@ -103,6 +107,10 @@ const errorInterceptor = async (error: AxiosError) => {
         onTokenRefreshed('success');
         
         // Create a new request with the original config
+        if (config) {
+          // Ensure withCredentials is set for the retry
+          config.withCredentials = true;
+        }
         return privateApi(config!);
       } catch (refreshError) {
         // If refresh fails, reject all subscribers
@@ -114,6 +122,10 @@ const errorInterceptor = async (error: AxiosError) => {
       // If already refreshing, add request to queue
       return new Promise((resolve) => {
         subscribeToTokenRefresh(() => {
+          if (config) {
+            // Ensure withCredentials is set for the retry
+            config.withCredentials = true;
+          }
           resolve(privateApi(config!));
         });
       });
@@ -126,10 +138,10 @@ const errorInterceptor = async (error: AxiosError) => {
     localStorage.removeItem('hasSession');
     
     // Only redirect if not already on auth pages
-    const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
+    
     const currentPath = window.location.pathname;
     
-    if (!publicRoutes.some(route => currentPath.startsWith(route))) {
+    if (!PUBLIC_ROUTES.some(route => currentPath.startsWith(route))) {
       window.location.href = '/login';
     }
   }
@@ -161,25 +173,25 @@ export const api = {
   // Auth endpoints
   auth: {
     login: (email: string, password: string) => 
-      publicApi.post('/auth/login', { email, password }),
+      publicApi.post('/auth/login', { email, password }, { withCredentials: true }),
     register: (userData: any) => 
-      publicApi.post('/auth/register', userData),
+      publicApi.post('/auth/register', userData, { withCredentials: true }),
     forgotPassword: (email: string) => 
       publicApi.post('/auth/forgot-password', { email }),
     resetPassword: (token: string, password: string) => 
       publicApi.post(`/auth/reset-password/${token}`, { password }),
     logout: () => 
-      privateApi.post('/auth/logout'),
+      privateApi.post('/auth/logout', {}, { withCredentials: true }),
     refresh: () =>
-      publicApi.post('/auth/refresh'),
+      publicApi.post('/auth/refresh', {}, { withCredentials: true }),
     getCurrentUser: () =>
-      privateApi.get('/auth/me'),
+      privateApi.get('/auth/me', { withCredentials: true }),
     checkAuth: () => {
       // Use the presence of the hasSession flag as an optimization
       // to avoid unnecessary API calls when we know there's no session
       const hasSession = localStorage.getItem('hasSession');
       if (hasSession === 'true') {
-        return privateApi.get('/auth/me');
+        return privateApi.get('/auth/me', { withCredentials: true });
       }
       return Promise.reject(new Error('No active session'));
     }
@@ -188,9 +200,9 @@ export const api = {
   // User endpoints
   user: {
     getProfile: () => 
-      privateApi.get('/user/profile'),
+      privateApi.get('/user/profile', { withCredentials: true }),
     updateProfile: (userData: any) => 
-      privateApi.put('/user/profile', userData),
+      privateApi.put('/user/profile', userData, { withCredentials: true }),
     joinWaitlist: (email: string, name: string) =>
       publicApi.post('/waitlist', { email, name }),
   },
@@ -198,11 +210,11 @@ export const api = {
   // Transaction endpoints
   transactions: {
     getAll: (params?: any) => 
-      privateApi.get('/transactions', { params }),
+      privateApi.get('/transactions', { params, withCredentials: true }),
     getById: (id: string) => 
-      privateApi.get(`/transactions/${id}`),
+      privateApi.get(`/transactions/${id}`, { withCredentials: true }),
     create: (transactionData: any) => 
-      privateApi.post('/transactions', transactionData),
+      privateApi.post('/transactions', transactionData, { withCredentials: true }),
   },
 };
 

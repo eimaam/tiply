@@ -1,6 +1,8 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { UserRole } from './types/user';
+import { User } from '@/lib/types/user';
+import { STEP_SEQUENCE, getStepNumber } from '@/contexts/OnboardingContext';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -57,3 +59,16 @@ export const PROJECT_INFO = {
   repoUrl: "https://github.com/eimaam/tiply",
   supportEmail: "support@usetiply.xyz"
 }
+
+// public routes
+export const PUBLIC_ROUTES = [
+  '/',
+  '/login',
+  '/register',
+  '/forgot-password',
+  '/reset-password',
+  '/terms-of-service',
+  '/privacy-policy',
+  '/contact-us',
+  '/about-us'
+];
