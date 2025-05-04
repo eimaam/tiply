@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import jwt, { SignOptions } from 'jsonwebtoken';
-import { UserModel, UserStatus } from '../models/User';
+import { UserModel, UserStatus, OnboardingStep } from '../models/User';
 import { Permission } from '../models/Permission';
 import { 
   LoginRequest, 
@@ -14,7 +14,8 @@ import {
   sendSuccess, 
   sendError, 
   throwResponse, 
-  handleControllerError, 
+  handleControllerError,
+  responseHandler, 
 } from '../utils/responseHandler';
 import { UserService } from '../services/user.service';
 import { TokenService } from '../services/token.service';
@@ -58,7 +59,7 @@ export class AuthController {
           role: defaultRole, // Assign default role
           permissions: defaultPermissionSets[defaultRole], // Assign permissions based on default role
           onboardingCompleted: false,
-          onboardingStep: 0, // Track which step of onboarding the user is on
+          currentOnboardingStep: OnboardingStep.USERNAME, // Use proper enum string value
           emailVerificationToken: uuidv4(),
           emailVerificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
         };
@@ -100,7 +101,7 @@ export class AuthController {
             role: newUser.role,
             permissions: newUser.permissions,
             onboardingCompleted: newUser.onboardingCompleted,
-            onboardingStep: newUser.onboardingStep,
+            currentOnboardingStep: newUser.currentOnboardingStep,
             emailVerified: false,
           },
         };
@@ -152,7 +153,7 @@ export class AuthController {
       const { email, password }: LoginRequest = req.body;
 
       // Find the user
-      const user = await UserModel.findOne({ email });
+      const user = await UserModel.findOne({ email: {$regex: new RegExp(`^${email}$`, 'i')} })
       if (!user) {
         return sendError({
           res,
@@ -214,6 +215,7 @@ export class AuthController {
 
       // Update last login timestamp
       user.lastLogin = new Date();
+      
       await user.save();
 
       // Prepare user data for response (exclude sensitive fields)
@@ -226,7 +228,7 @@ export class AuthController {
         role: user.role,
         permissions: user.permissions,
         onboardingCompleted: user.onboardingCompleted,
-        onboardingStep: user.onboardingStep,
+        currentOnboardingStep: user.currentOnboardingStep,
         emailVerified: user.emailVerified,
         walletAddress: user.walletAddress,
         avatarUrl: user.avatarUrl,
@@ -241,7 +243,7 @@ export class AuthController {
         sameSite: 'strict' as 'strict'
       };
       
-      // Access token cookie - shorter expiration
+      // Access token cookie
       res.cookie('accessToken', accessToken, {
         ...cookieOptions,
         maxAge: 30 * 60 * 1000, // 30 minutes
@@ -308,12 +310,23 @@ export class AuthController {
         });
       }
       
-      // Set new access token in cookie
-      res.cookie('accessToken', result.accessToken, {
+      const cookieOptions = {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict' as 'strict',
+        sameSite: 'strict' as 'strict'
+      };
+      
+      // Set new access token in cookie
+      res.cookie('accessToken', result.accessToken, {
+        ...cookieOptions,
         maxAge: 30 * 60 * 1000 // 30 minutes
+      });
+      
+      // Set the new refresh token in cookie (token rotation)
+      res.cookie('refreshToken', result.refreshToken, {
+        ...cookieOptions,
+        path: '/api/v1/auth/refresh', // Only sent to refresh endpoint
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
       
       return sendSuccess({
@@ -321,6 +334,7 @@ export class AuthController {
         message: 'Token refreshed successfully! 🔄',
         data: {
           accessExpiresIn: TokenService.ACCESS_TOKEN_EXPIRY,
+          refreshExpiresIn: TokenService.REFRESH_TOKEN_EXPIRY
         }
       });
     } catch (error) {
@@ -349,14 +363,15 @@ export class AuthController {
 
       // Update user with wallet info
       user.walletAddress = walletAddress;
-      user.onboardingStep = Math.max(user.onboardingStep || 0, 1); // Set to step 1 if not already at a higher step
+      // Use enum string value instead of numeric index
+      user.currentOnboardingStep = OnboardingStep.WALLET; 
       await user.save();
 
       return sendSuccess({
         res,
         message: 'Wallet information saved successfully',
         data: {
-          onboardingStep: user.onboardingStep,
+          currentOnboardingStep: user.currentOnboardingStep,
           walletAddress: user.walletAddress
         }
       });
@@ -372,7 +387,7 @@ export class AuthController {
    */
   static async saveUsername(req: AuthenticatedRequest, res: Response) {
     try {
-      const userId = req.user.userId;
+      const { userId } = req.user;
       const { username } = req.body;
 
       // Check if username is already taken
@@ -396,14 +411,15 @@ export class AuthController {
 
       // Update user with username
       user.username = username;
-      user.onboardingStep = Math.max(user.onboardingStep || 0, 2); // Set to step 2 if not already at a higher step
+      // Use enum string value instead of numeric index
+      user.currentOnboardingStep = OnboardingStep.USERNAME;
       await user.save();
 
       return sendSuccess({
         res,
         message: 'Username saved successfully',
         data: {
-          onboardingStep: user.onboardingStep,
+          currentOnboardingStep: user.currentOnboardingStep,
           username: user.username
         }
       });
@@ -420,7 +436,15 @@ export class AuthController {
   static async saveProfile(req: AuthenticatedRequest, res: Response) {
     try {
       const userId = req.user.userId;
-      const { displayName, bio } = req.body;
+      const { displayName, bio, socialLinks } = req.body;
+
+      if (!displayName) {
+        return sendError({
+          res,
+          message: 'Display name is required',
+          statusCode: 400
+        });
+      }
 
       const user = await UserModel.findById(userId);
       if (!user) {
@@ -431,19 +455,21 @@ export class AuthController {
         });
       }
 
-      // Update user profile details
       user.displayName = displayName;
-      if (bio) user.bio = bio;
-      user.onboardingStep = Math.max(user.onboardingStep || 0, 3); // Set to step 3 if not already at a higher step
+      user.bio = bio || user.bio;
+      user.socialLinks = socialLinks || user.socialLinks;
+      // Update to set the next step (AVATAR) instead of the current step (PROFILE)
+      user.currentOnboardingStep = OnboardingStep.AVATAR;
       await user.save();
 
       return sendSuccess({
         res,
-        message: 'Profile information saved successfully',
+        message: 'Profile updated successfully 🙌',
         data: {
-          onboardingStep: user.onboardingStep,
+          currentOnboardingStep: user.currentOnboardingStep,
           displayName: user.displayName,
-          bio: user.bio
+          bio: user.bio,
+          socialLinks: user.socialLinks
         }
       });
     } catch (error) {
@@ -459,7 +485,15 @@ export class AuthController {
   static async saveAvatar(req: AuthenticatedRequest, res: Response) {
     try {
       const userId = req.user.userId;
-      const { avatarUrl, coverImageUrl } = req.body;
+      const { avatarUrl } = req.body;
+
+      if (!avatarUrl) {
+        return sendError({
+          res,
+          message: 'Avatar URL is required',
+          statusCode: 400
+        });
+      }
 
       const user = await UserModel.findById(userId);
       if (!user) {
@@ -470,19 +504,31 @@ export class AuthController {
         });
       }
 
-      // Update user with avatar and cover image
-      if (avatarUrl) user.avatarUrl = avatarUrl;
-      if (coverImageUrl) user.coverImageUrl = coverImageUrl;
-      user.onboardingStep = Math.max(user.onboardingStep || 0, 4); // Set to step 4 if not already at a higher step
-      await user.save();
+      
+
+      const updateData = {
+        avatarUrl: avatarUrl,
+        // take onboarding step to the next step
+        currentOnboardingStep: OnboardingStep.CUSTOMIZE
+      }
+
+      // Update user with avatar URL
+      const updatedUser = await UserModel.findByIdAndUpdate(userId, updateData, { new: true });
+
+      if (!updatedUser) {
+        return sendError({
+          res,
+          message: 'Failed to update avatar',
+          statusCode: 500
+        });
+      }
 
       return sendSuccess({
         res,
-        message: 'Avatar information saved successfully',
+        message: 'Avatar updated successfully 🖼️',
         data: {
-          onboardingStep: user.onboardingStep,
-          avatarUrl: user.avatarUrl,
-          coverImageUrl: user.coverImageUrl
+          currentOnboardingStep: updatedUser.currentOnboardingStep,
+          avatarUrl: updatedUser.avatarUrl,
         }
       });
     } catch (error) {
@@ -498,7 +544,19 @@ export class AuthController {
   static async saveCustomization(req: AuthenticatedRequest, res: Response) {
     try {
       const userId = req.user.userId;
-      const { tipAmounts, theme, additionalSettings } = req.body;
+      const { 
+        primaryColor,
+        backgroundColor,
+        fontFamily,
+        buttonStyle,
+        customCss,
+        showTipCounter,
+        enableCustomMessage,
+        tipOptions,
+        minimumTipAmount,
+        allowCustomAmounts,
+        receiveNotes
+      } = req.body;
 
       const user = await UserModel.findById(userId);
       if (!user) {
@@ -509,21 +567,34 @@ export class AuthController {
         });
       }
 
-      // Update user with customization settings
-      if (tipAmounts) user.tipAmounts = tipAmounts;
-      if (theme) user.theme = theme;
-      if (additionalSettings) user.additionalSettings = additionalSettings;
-      user.onboardingStep = Math.max(user.onboardingStep || 0, 5); // Set to step 5 if not already at a higher step
+      // Initialize customization object if it doesn't exist
+      if (!user.customization) {
+        user.customization = {};
+      }
+
+      // Update user customization settings with provided values
+      if (primaryColor !== undefined) user.customization.primaryColor = primaryColor;
+      if (backgroundColor !== undefined) user.customization.backgroundColor = backgroundColor;
+      if (fontFamily !== undefined) user.customization.fontFamily = fontFamily;
+      if (buttonStyle !== undefined) user.customization.buttonStyle = buttonStyle;
+      if (customCss !== undefined) user.customization.customCss = customCss;
+      if (showTipCounter !== undefined) user.customization.showTipCounter = showTipCounter;
+      if (enableCustomMessage !== undefined) user.customization.enableCustomMessage = enableCustomMessage;
+      if (tipOptions !== undefined) user.customization.tipOptions = tipOptions;
+      if (minimumTipAmount !== undefined) user.customization.minimumTipAmount = minimumTipAmount;
+      if (allowCustomAmounts !== undefined) user.customization.allowCustomAmounts = allowCustomAmounts;
+      if (receiveNotes !== undefined) user.customization.receiveNotes = receiveNotes;
+      
+      // Update onboarding step
+      user.currentOnboardingStep = OnboardingStep.COMPLETE;
       await user.save();
 
       return sendSuccess({
         res,
-        message: 'Customization settings saved successfully',
+        message: 'Customization settings saved successfully! 🎨',
         data: {
-          onboardingStep: user.onboardingStep,
-          tipAmounts: user.tipAmounts,
-          theme: user.theme,
-          additionalSettings: user.additionalSettings
+          currentOnboardingStep: user.currentOnboardingStep,
+          customization: user.customization
         }
       });
     } catch (error) {
@@ -550,7 +621,7 @@ export class AuthController {
       }
 
       // Check if all required fields are present
-      if (!user.username || !user.walletAddress) {
+      if (!user.username) {
         return sendError({
           res,
           message: 'Cannot complete onboarding: missing required information',
@@ -575,7 +646,7 @@ export class AuthController {
         user.permissions = creatorPermissions;
       }
 
-      // TEST: create wallet
+      // create wallet
       const wallet = await CircleService.createWallet(user?._id);
 
       if (!wallet) {
@@ -588,7 +659,7 @@ export class AuthController {
       }
 
       // update user with wallet ID
-      const walletUpdate = await UserModel.findByIdAndUpdate(user?._id, walletData, { session });
+      const walletUpdate = await UserModel.findByIdAndUpdate(user?._id, walletData);
 
       if (!walletUpdate) {
         throwResponse('Failed to update user with wallet ID. Please try again later. 😕', 500, 'USER_UPDATE_FAILED');
@@ -628,14 +699,12 @@ export class AuthController {
   static async checkUsername(req: Request, res: Response) {
     try {
       const { username } = req.params;
-      const existingUser = await UserModel.findOne({ username });
-      
-      return sendSuccess({
-        res,
-        message: existingUser ? 'Username is already taken' : 'Username is available',
-        data: {
-          available: !existingUser
-        }
+      const existingUser = await UserService.getUserByUsername(username);
+
+      return responseHandler.success(res, 
+        existingUser ? "Username is already taken" : "Username is available", 
+        {
+        available: !existingUser,
       });
     } catch (error) {
       return handleControllerError(error, res);

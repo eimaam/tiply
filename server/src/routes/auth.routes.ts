@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { AuthController } from "../controllers/AuthController";
 import { authenticate, withAuth } from "../middleware/auth.middleware";
-import { validations, validation } from "../middleware/validation.middleware";
+import { validations, validation, validateRequest } from "../middleware/validation.middleware";
 import {
   authRateLimiter,
   userCreationRateLimiter,
@@ -78,11 +78,6 @@ router.post("/logout", authenticate, withAuth(AuthController.logout));
 
 // Protected onboarding routes
 router.post(
-  "/onboarding/wallet",
-  authenticate,
-  withAuth(AuthController.saveWallet)
-);
-router.post(
   "/onboarding/username",
   authenticate,
   withAuth(AuthController.saveUsername)
@@ -109,6 +104,11 @@ router.post(
 );
 
 // Username availability check (public)
-router.get("/check-username/:username", AuthController.checkUsername);
+router.get(
+  "/check-username/:username",
+  validations.usernameCheck,
+  validateRequest,
+  AuthController.checkUsername
+);
 
 export default router;

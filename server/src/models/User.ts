@@ -21,7 +21,6 @@ export enum OnboardingStep {
   USERNAME = "username",
   PROFILE = "profile",
   AVATAR = "avatar",
-  WALLET = "wallet",
   CUSTOMIZE = "customize",
   COMPLETE = "complete",
 }
@@ -290,6 +289,7 @@ UserSchema.pre("save", async function (next) {
 UserSchema.methods.comparePassword = async function (
   candidatePassword: string
 ): Promise<boolean> {
+  console.log("Comparing password:", candidatePassword, this.password);
   return bcrypt.compare(candidatePassword, this.password);
 };
 

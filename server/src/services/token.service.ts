@@ -85,9 +85,9 @@ export class TokenService {
     /**
      * Verify a refresh token and generate a new access token
      * @param refreshToken - The refresh token to verify
-     * @returns New access token or null if refresh token is invalid
+     * @returns New access token, refresh token and user data or null if refresh token is invalid
      */
-    static async verifyRefreshToken(refreshToken: string): Promise<{ accessToken: string, user: any } | null> {
+    static async verifyRefreshToken(refreshToken: string): Promise<{ accessToken: string, refreshToken: string, user: any } | null> {
         try {
             // Verify the refresh token
             const decoded = jwt.verify(refreshToken, JWT.REFRESH_SECRET || JWT.SECRET) as JwtPayload;
@@ -104,6 +104,7 @@ export class TokenService {
             
             // Check if refresh token is still valid (exists in user's refreshTokens)
             let isTokenValid = false;
+            let tokenIndex = -1;
             
             // Check each stored token hash
             for (let i = 0; i < (user.refreshTokens?.length || 0); i++) {
@@ -120,6 +121,7 @@ export class TokenService {
                     const match = await bcrypt.compare(refreshToken, tokenHash);
                     if (match) {
                         isTokenValid = true;
+                        tokenIndex = i;
                         break;
                     }
                 }
@@ -129,6 +131,14 @@ export class TokenService {
                 throw new Error('Refresh token is invalid or has been revoked');
             }
             
+            // Implement token rotation - revoke the current refresh token
+            if (tokenIndex !== -1 && user.refreshTokens) {
+                user.refreshTokens.splice(tokenIndex, 1);
+                if (user.refreshTokensExpiry) {
+                    user.refreshTokensExpiry.splice(tokenIndex, 1);
+                }
+            }
+
             // Generate new access token
             const accessToken = this.generateAccessToken(
                 user._id.toString(),
@@ -137,9 +147,19 @@ export class TokenService {
                 user.permissions
             );
             
-            // Return new access token
+            // Generate new refresh token (token rotation)
+            const newRefreshToken = await this.generateRefreshToken(user._id.toString(), user.email);
+            
+            // Clean up any expired tokens while we're at it
+            await this.cleanupExpiredTokens(user._id.toString());
+            
+            // Save the updated user document with removed old token
+            await user.save();
+            
+            // Return new access token, refresh token, and user info
             return {
                 accessToken,
+                refreshToken: newRefreshToken,
                 user: {
                     id: user._id,
                     email: user.email,
