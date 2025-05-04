@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { hasRoleAccess } from '@/lib/utils';
 import { UserRole } from '@/lib/types/user';
 
@@ -35,22 +35,18 @@ import ProfilePage from '@/pages/profile';
 import EditProfile from '@/pages/profile-edit';
 import WaitlistPage from './pages/waitlist';
 import ErrorPage from './pages/error-page';
+import { message } from 'antd';
+import { Spin } from 'antd';
+import { useUser } from './contexts/UserContext';
+import { OnboardingProvider } from './contexts/OnboardingContext';
+import Homepage from './pages/home';
+
+interface ProtectedRouteProps {
+  element: React.ReactNode;
+  requiredRole?: UserRole;
+}
 
 // Layout components
-const LandingPage = () => (
-  <div className="min-h-screen">
-    <Navbar />
-    <main>
-      <Hero />
-      <Features />
-      <HowItWorks />
-      <Pricing />
-      <FAQSection />
-    </main>
-    <Footer />
-  </div>
-);
-
 const AuthLayout = ({ children }: { children: React.ReactNode }) => (
   <>
     {children}
@@ -58,30 +54,38 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => (
 );
 
 // Role-based route guard component
-interface ProtectedRouteProps {
-  element: React.ReactNode;
-  requiredRole?: UserRole;
-}
-
 const ProtectedRoute = ({ 
   element, 
   requiredRole = UserRole.USER 
 }: ProtectedRouteProps) => {
-  // This would normally check authentication state from your auth context
-  // Here we're mocking it for demonstration purposes
-  const isAuthenticated = true; // Replace with actual auth check
-  const userRole = UserRole.ADMIN; // Replace with actual role from user context/state
+  const { user, isAuthenticated, isLoading } = useUser();
+  const location = useLocation();
+  
+  // Show loading spinner while checking authentication
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Spin size="large" tip="Loading your account..." />
+      </div>
+    );
+  }
   
   // If user is not authenticated, redirect to login
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
   
-  // Use utility function to check role-based access
+  // If onboarding is required and not already on onboarding page
+  if (user && !user.onboardingCompleted && !location.pathname.includes('/onboarding')) {
+    return <Navigate to="/onboarding/username" replace />;
+  }
+  
+  // Check role-based access
+  const userRole = user?.role || UserRole.USER;
   const hasAccess = hasRoleAccess(userRole, requiredRole);
   
   if (!hasAccess) {
-    // Redirect to dashboard or show unauthorized message
+    // Redirect to dashboard if user doesn't have required role
     return <Navigate to="/dashboard" replace />;
   }
   
@@ -89,19 +93,52 @@ const ProtectedRoute = ({
   return <>{element}</>;
 };
 
-function App() {
+// Onboarding route component
+const OnboardingRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, isAuthenticated, isLoading } = useUser();
+  const location = useLocation();
+  
+  // Show loading spinner while checking authentication
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Spin size="large" tip="Loading your account..." />
+      </div>
+    );
+  }
+  
+  // If user is not authenticated, redirect to login
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+  }
+  
+  // If onboarding is already completed, redirect to dashboard
+  if (user && user.onboardingCompleted) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
   return (
-    <Router>
+    <OnboardingProvider>
+      {children}
+    </OnboardingProvider>
+  );
+};
+
+function App() {
+  // Set up Ant Design message configuration globally
+  message.config({
+    maxCount: 1
+  });
+
+  return (
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<WaitlistPage />} />
         <Route path="/waitlist" element={<WaitlistPage />} />
         
-       
         {/* Fallback route */}
         <Route path="*" element={<ErrorPage />} />
       </Routes>
-    </Router>
   );
 }
 
