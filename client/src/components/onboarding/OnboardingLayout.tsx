@@ -2,6 +2,9 @@ import * as React from 'react'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { ArrowLeftOutlined, ArrowRightOutlined, LoadingOutlined } from '@ant-design/icons'
+import { useOnboarding } from '@/contexts/OnboardingContext';
+import { useUser } from '@/contexts/UserContext';
+import { OnboardingCompleteModal } from './OnboardingCompleteModal';
 
 // Step type definition
 export type OnboardingStep = {
@@ -21,7 +24,7 @@ interface OnboardingLayoutProps {
   }
   onNext: () => void
   onPrevious: () => void
-  canContinue: boolean
+  canContinue?: boolean
   isLoading?: boolean
   isLastStep?: boolean
   children: React.ReactNode
@@ -49,13 +52,25 @@ export function OnboardingLayout({
   stepInfo,
   onNext,
   onPrevious,
-  canContinue,
+  canContinue = true,
   isLoading = false,
   isLastStep = false,
   children 
 }: OnboardingLayoutProps) {
+  // Get the canGoBack flag and modal state from the onboarding context
+  const { canGoBack, showCompletionModal, closeCompletionModal } = useOnboarding();
+  // Get the user data from the user context
+  const { user } = useUser();
+
   return (
     <div className="container max-w-2xl mx-auto px-4">
+      {/* Render the completion modal when showCompletionModal is true */}
+      <OnboardingCompleteModal 
+        visible={showCompletionModal} 
+        onClose={closeCompletionModal}
+        username={user?.username || ''}
+      />
+      
       <motion.div 
         className="w-full"
         variants={containerVariants}
@@ -94,15 +109,20 @@ export function OnboardingLayout({
           
           {/* Navigation buttons */}
           <div className="mt-10 flex justify-between items-center">
-            <Button
-              variant="outline"
-              onClick={onPrevious}
-              disabled={currentStep === 0}
-              className={`${currentStep === 0 ? 'opacity-0 pointer-events-none' : ''}`}
-            >
-              <ArrowLeftOutlined className="mr-2" />
-              Back
-            </Button>
+            {/* Only show back button if canGoBack is true */}
+            {canGoBack ? (
+              <Button
+                variant="outline"
+                onClick={onPrevious}
+                disabled={isLoading || currentStep === 1}
+                className={`${currentStep === 0 ? 'opacity-0 pointer-events-none' : ''}`}
+              >
+                <ArrowLeftOutlined className="mr-2" />
+                Back
+              </Button>
+            ) : (
+              <div></div> // Empty div to maintain layout when back button is hidden
+            )}
             
             <div className="flex items-center gap-3">
               {/* Step indicators */}

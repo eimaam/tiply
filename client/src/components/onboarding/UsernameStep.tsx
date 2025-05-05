@@ -1,9 +1,11 @@
 import * as React from 'react'
 import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
 import { InfoCircleOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons'
 import { OnboardingHeading } from './OnboardingHeading'
 import debounce from 'lodash.debounce'
+import { publicApi } from '@/lib/api'
+import { useUser } from '@/contexts/UserContext'
+
 
 interface UsernameStepProps {
   username: string;
@@ -18,30 +20,18 @@ export function UsernameStep({
   onNext, 
   onPrevious 
 }: UsernameStepProps) {
+  const { user } = useUser()
   const [isAvailable, setIsAvailable] = React.useState<boolean | null>(null)
   const [isChecking, setIsChecking] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   
-  const debounceCheckUsername = React.useCallback(
-    debounce(async (value: string) => {
-      setIsChecking(true);
-      try {
-        // Simulate API call to check username availability
-        const response = await fetch(`/api/check-username?username=${value}`);
-        const { available } = await response.json();
-        if (!available) {
-          setError('This username is already taken. Please try another.');
-        } else {
-          setError(null);
-        }
-      } catch {
-        setError('An error occurred while checking username availability.');
-      } finally {
-        setIsChecking(false);
-      }
-    }, 500),
-    []
-  );
+  // Auto-skip this step if user already has a username
+  React.useEffect(() => {
+    if (user?.username) {
+      // If user already has a username, automatically proceed to next step
+      onNext();
+    }
+  }, [user, onNext]);
 
   // Check if username format is valid
   const isValidFormat = React.useMemo(() => {
@@ -52,45 +42,69 @@ export function UsernameStep({
     return validFormat
   }, [username])
   
+  // Create a debounced function that checks username availability
+  const debouncedCheckUsername = React.useCallback(
+    debounce(async (value: string) => {
+      if (!value || !isValidFormat) {
+        setIsAvailable(null);
+        return;
+      }
+      
+      setIsChecking(true);
+      
+      try {
+        const response = await publicApi.get(`/auth/check-username/${value}`);
+        const { available, message } = response.data.data;
+        
+        setIsAvailable(available);
+        
+        if (!available) {
+          setError('This username is already taken. Please try another. 😔');
+        } else {
+          setError(null);
+        }
+        
+        // Update parent component with the latest validation state
+        onUsernameChange(value, isValidFormat, available);
+      } catch (err) {
+        console.error('Error checking username:', err);
+        setError('An error occurred while checking username availability. 🤔');
+        setIsAvailable(null);
+      } finally {
+        setIsChecking(false);
+      }
+    }, 500),
+    [isValidFormat, onUsernameChange]
+  );
+  
   // Check if we can continue to next step
-  const canContinue = username && isValidFormat && isAvailable === true && !isChecking
+  const canContinue = username && isValidFormat && isAvailable === true && !isChecking;
   
   // Handle username change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.toLowerCase()
-    onUsernameChange(value, isValidFormat, isAvailable === true)
-    debounceCheckUsername(value);
-  }
-  
-  // Check username availability (simulated)
-  const checkAvailability = () => {
-    if (!username || !isValidFormat) return
+    const value = e.target.value.toLowerCase();
     
-    setIsChecking(true)
+    // Update parent with current values but mark as invalid until checked
+    onUsernameChange(value, isValidFormat, false);
     
-    // Simulate API call to check username availability
-    setTimeout(() => {
-      // For demo, usernames with "taken" in them are considered unavailable
-      const available = !username.includes('taken')
-      setIsAvailable(available)
-      setIsChecking(false)
-      
-      if (!available) {
-        setError('This username is already taken. Please try another.')
+    if (value && !isValidFormat) {
+      setError('Username must be 3-20 characters and only contain letters, numbers, and underscores.');
+      setIsAvailable(null);
+    } else {
+      setError(null);
+      // Only trigger API check if format is valid
+      if (value && isValidFormat) {
+        debouncedCheckUsername(value);
       }
-    }, 800)
-  }
+    }
+  };
   
-  // Check availability when username format is valid and after user stops typing
+  // Run username check when component mounts or username format becomes valid
   React.useEffect(() => {
     if (username && isValidFormat) {
-      const timer = setTimeout(() => {
-        checkAvailability()
-      }, 500)
-      
-      return () => clearTimeout(timer)
+      debouncedCheckUsername(username);
     }
-  }, [username, isValidFormat])
+  }, [isValidFormat]); // Only dependent on isValidFormat changing, not username
 
   return (
     <div className="space-y-8">
@@ -130,7 +144,7 @@ export function UsernameStep({
             </div>
             
             {/* Status indicator */}
-            {username && !error && (
+            {username && (
               <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                 {isChecking ? (
                   <span className="animate-spin text-yellow-400">⟳</span>
@@ -151,7 +165,7 @@ export function UsernameStep({
           {/* Success message */}
           {isAvailable && (
             <p className="text-sm text-green-500 flex items-center">
-              <CheckCircleOutlined className="mr-1" /> Username is available!
+              <CheckCircleOutlined className="mr-1" /> Username is available! 🎉
             </p>
           )}
           
