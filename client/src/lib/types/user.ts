@@ -61,6 +61,7 @@ export interface User {
   lastLogin?: Date;
   createdAt: Date;
   updatedAt: Date;
+  balance?: number; 
 }
 
 /**

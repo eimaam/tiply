@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { motion } from 'framer-motion';
+import { useUser } from '@/contexts/UserContext'; // Import useUser hook
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -27,186 +28,32 @@ import { TransactionCard } from '@/components/ui/dashboard/TransactionCard';
 import { Withdrawal } from '@/components/wallet/Withdrawal';
 import { message } from 'antd';
 import { TransactionStatusEnum } from '@/types/transaction';
+import { analyticsService, DashboardMetrics, RecentTip } from '@/services/analytics.service';
 
 // Set current user's premium status for demo purposes
 const USER_IS_PREMIUM = false;
 
-// Original transactions data
-const originalTips = [
-  { 
-    id: '1', 
-    sender: 'alex.eth', 
-    amount: 0.05, 
-    tokenType: 'USDC',
-    message: 'Love your content! Keep it up!',
-    timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
-    status: 'completed',
-  },
-  { 
-    id: '2', 
-    sender: 'crypto_whale.sol', 
-    amount: 0.5, 
-    tokenType: 'USDC',
-    message: 'Great insights on the latest project',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(), // 3 hours ago
-    status: 'completed',
-  },
-  { 
-    id: '3', 
-    sender: 'web3_enthusiast', 
-    amount: 0.1, 
-    tokenType: 'USDC',
-    message: 'Thanks for the help yesterday',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-    status: 'completed',
-  },
-  { 
-    id: '4', 
-    sender: 'blockchain_maven', 
-    amount: 0.2, 
-    tokenType: 'USDC',
-    message: 'For your great explanation on Twitter!',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), // 2 days ago
-    status: 'completed',
-  },
-  { 
-    id: '5', 
-    sender: 'defi_buddy', 
-    amount: 0.15, 
-    tokenType: 'USDC',
-    message: 'Keep sharing knowledge!',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(), // 3 days ago
-    status: 'completed',
-  },
-  { 
-    id: '6', 
-    sender: 'nft_collector', 
-    amount: 0.3, 
-    tokenType: 'USDC',
-    message: 'Thanks for the NFT review!',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 96).toISOString(), // 4 days ago
-    status: 'completed',
-  },
-  { 
-    id: '7', 
-    sender: 'anon_supporter', 
-    amount: 0.25, 
-    tokenType: 'USDC',
-    message: 'Keep up the good work',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 120).toISOString(), // 5 days ago
-    status: 'completed',
-  },
-  { 
-    id: '8', 
-    sender: 'web3_dev', 
-    amount: 0.4, 
-    tokenType: 'USDC',
-    message: 'Thanks for the tutorial!',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 144).toISOString(), // 6 days ago
-    status: 'completed',
-  },
-  { 
-    id: '9', 
-    sender: 'crypto_newbie', 
-    amount: 0.1, 
-    tokenType: 'SOL',
-    message: 'Thanks for explaining crypto so clearly!',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 168).toISOString(), // 7 days ago
-    status: 'completed',
-  },
-  { 
-    id: '10', 
-    sender: 'longtime_fan', 
-    amount: 0.6, 
-    tokenType: 'USDC',
-    message: 'Been following for years. Thanks for all you do!',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 192).toISOString(), // 8 days ago
-    status: 'completed',
-  },
-  { 
-    id: '11', 
-    sender: 'crypto_researcher', 
-    amount: 0.75, 
-    tokenType: 'USDC',
-    message: 'Great analysis on latest trends',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 216).toISOString(), // 9 days ago
-    status: 'completed',
-  },
-  { 
-    id: '12', 
-    sender: 'chain_enthusiast', 
-    amount: 0.35, 
-    tokenType: 'USDC',
-    message: 'Your blockchain explanations are the best!',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 240).toISOString(), // 10 days ago
-    status: 'completed',
-  },
-  { 
-    id: '13', 
-    sender: 'metaverse_explorer', 
-    amount: 0.8, 
-    tokenType: 'USDC',
-    message: 'Thanks for the virtual world tour!',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 264).toISOString(), // 11 days ago
-    status: 'completed',
-  },
-  { 
-    id: '14', 
-    sender: 'dao_voter', 
-    amount: 0.45, 
-    tokenType: 'USDC',
-    message: 'Great governance proposal analysis',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 288).toISOString(), // 12 days ago
-    status: 'completed',
-  },
-  { 
-    id: '15', 
-    sender: 'crypto_student', 
-    amount: 0.15, 
-    tokenType: 'USDC',
-    message: 'Your lessons are helping me so much!',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 336).toISOString(), // 14 days ago
-    status: 'completed',
-  },
-  { 
-    id: '16', 
-    sender: 'old_school_hodl', 
-    amount: 1.0, 
-    tokenType: 'USDC',
-    message: 'Been in crypto since 2013. Great content!',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 384).toISOString(), // 16 days ago
-    status: 'completed',
-  },
-  { 
-    id: '17', 
-    sender: 'nft_artist', 
-    amount: 0.7, 
-    tokenType: 'SOL',
-    message: 'Thank you for featuring my artwork!',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 432).toISOString(), // 18 days ago
-    status: 'completed',
-  },
-];
-
-// Original analytics data
-const originalAnalyticsData = {
-  totalTips: 27,
-  totalValue: 8.45,
-  avgTipValue: 0.31,
-  topToken: 'USDC',
-  weeklyGrowth: 12, // percentage
-  monthlyVolume: [1.2, 0.8, 1.5, 0.7, 0.9, 2.1, 1.8], // last 7 days
-};
-
 export function Dashboard() {
+  const { user, refreshUser } = useUser(); // Get user data and refreshUser from context
   const [copied, setCopied] = React.useState(false);
-  const [isLoading, setIsLoading] = React.useState(false);
-  const tipLink = 'https://tiplink.io/johndoe';
+  const [isLoading, setIsLoading] = React.useState(true);
+  const tipLink = `https://usetiply.xyz/${user?.username || 'your-username'}`;
   const [activeTab, setActiveTab] = React.useState('dashboard');
-  const [allTips, setAllTips] = React.useState(originalTips);
-  const [visibleTips, setVisibleTips] = React.useState(originalTips.slice(0, 5));
-  const [analyticsData, setAnalyticsData] = React.useState(originalAnalyticsData);
-  const [currentBalance, setCurrentBalance] = React.useState(analyticsData.totalValue);
+  
+  // State for analytics data
+  const [metrics, setMetrics] = React.useState<DashboardMetrics>({
+    totalTips: 0,
+    totalValue: 0,
+    avgTipValue: 0,
+    topToken: 'USDC',
+    weeklyGrowth: 0,
+    balance: 0,
+    monthlyVolume: [0, 0, 0, 0, 0, 0, 0]
+  });
+  
+  // State for recent tips
+  const [recentTips, setRecentTips] = React.useState<RecentTip[]>([]);
+  const [visibleTips, setVisibleTips] = React.useState<RecentTip[]>([]);
   
   // Filter state
   const [filters, setFilters] = React.useState<DataFilterType>({
@@ -222,6 +69,9 @@ export function Dashboard() {
     sortOrder: 'desc',
     isPremiumUser: USER_IS_PREMIUM,
   });
+  
+  // Get balance from metrics or user
+  const currentBalance = metrics.balance ?? user?.balance ?? 0;
   
   // Format relative time
   const formatRelativeTime = (timestamp: string) => {
@@ -249,17 +99,16 @@ export function Dashboard() {
     setIsLoading(true);
     setFilters(newFilters);
     
-    // Apply filters after a short delay (simulating API call)
-    setTimeout(() => {
-      applyFilters(newFilters);
-      setIsLoading(false);
-    }, 500);
+    // Fetch analytics with date filters
+    fetchAnalytics(
+      newFilters.startDate ? new Date(newFilters.startDate).toISOString() : undefined,
+      newFilters.endDate ? new Date(newFilters.endDate).toISOString() : undefined
+    );
   };
 
-  // Apply filters to data
-  const applyFilters = (appliedFilters: DataFilterType) => {
-    // Filter transactions
-    let filteredTips = [...originalTips];
+  // Apply filters to recent tips data
+  const applyFilters = (tips: RecentTip[], appliedFilters: DataFilterType) => {
+    let filteredTips = [...tips];
     
     // Apply search filter
     if (appliedFilters.searchQuery) {
@@ -275,16 +124,9 @@ export function Dashboard() {
       filteredTips = filteredTips.filter(tip => tip.status === appliedFilters.status);
     }
     
-    // Apply date range filters
-    if (appliedFilters.startDate) {
-      const startDate = new Date(appliedFilters.startDate);
-      filteredTips = filteredTips.filter(tip => new Date(tip.timestamp) >= startDate);
-    }
-    
-    if (appliedFilters.endDate) {
-      const endDate = new Date(appliedFilters.endDate);
-      endDate.setHours(23, 59, 59, 999); // End of day
-      filteredTips = filteredTips.filter(tip => new Date(tip.timestamp) <= endDate);
+    // Apply currency filter
+    if (appliedFilters.currency) {
+      filteredTips = filteredTips.filter(tip => tip.tokenType === appliedFilters.currency);
     }
     
     // Apply amount filters
@@ -296,17 +138,12 @@ export function Dashboard() {
       filteredTips = filteredTips.filter(tip => tip.amount <= appliedFilters.maxAmount!);
     }
     
-    // Apply currency filter
-    if (appliedFilters.currency) {
-      filteredTips = filteredTips.filter(tip => tip.tokenType === appliedFilters.currency);
-    }
-    
     // Apply sorting
     if (appliedFilters.sortBy) {
       filteredTips.sort((a, b) => {
         const key = appliedFilters.sortBy!;
-        const aValue = a[key as keyof typeof a];
-        const bValue = b[key as keyof typeof b];
+        const aValue = a[key as keyof RecentTip];
+        const bValue = b[key as keyof RecentTip];
         
         if (aValue < bValue) {
           return appliedFilters.sortOrder === 'asc' ? -1 : 1;
@@ -318,90 +155,36 @@ export function Dashboard() {
       });
     }
     
-    // Update the tips list with filtered results
-    setAllTips(filteredTips);
-    setVisibleTips(filteredTips.slice(0, 5));
-    
-    // Update the analytics data based on filtered tips
-    updateAnalyticsData(filteredTips);
+    return filteredTips;
   };
   
-  // Update analytics data based on filtered tips
-  const updateAnalyticsData = (filteredTips: typeof originalTips) => {
-    if (filteredTips.length === 0) {
-      // If no tips match filter, show zeros
-      setAnalyticsData({
-        ...originalAnalyticsData,
-        totalTips: 0,
-        totalValue: 0,
-        avgTipValue: 0
-      });
-      return;
-    }
-    
-    // Calculate new values based on filtered tips
-    const totalValue = filteredTips.reduce((sum, tip) => sum + tip.amount, 0);
-    const avgTipValue = totalValue / filteredTips.length;
-    
-    // Count tips by token type to find top token
-    const tokenCounts = filteredTips.reduce((acc, tip) => {
-      acc[tip.tokenType] = (acc[tip.tokenType] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-    
-    // Find the token with the most tips
-    let topToken = 'USDC';
-    let maxCount = 0;
-    
-    Object.entries(tokenCounts).forEach(([token, count]) => {
-      if (count > maxCount) {
-        maxCount = count;
-        topToken = token;
-      }
-    });
-    
-    // Calculate weekly volume (last 7 days)
-    const now = new Date();
-    const weeklyVolume = Array(7).fill(0);
-    
-    filteredTips.forEach(tip => {
-      const tipDate = new Date(tip.timestamp);
-      const diffDays = Math.floor((now.getTime() - tipDate.getTime()) / (1000 * 60 * 60 * 24));
-      
-      if (diffDays >= 0 && diffDays < 7) {
-        weeklyVolume[diffDays] += tip.amount;
-      }
-    });
-    
-    // Reverse the array so the oldest day comes first
-    weeklyVolume.reverse();
-    
-    // Calculate weekly growth
-    const thisWeekTotal = weeklyVolume.slice(0, 3).reduce((sum, day) => sum + day, 0);
-    const lastWeekTotal = weeklyVolume.slice(4, 7).reduce((sum, day) => sum + day, 0);
-    const weeklyGrowth = lastWeekTotal > 0 
-      ? Math.round(((thisWeekTotal - lastWeekTotal) / lastWeekTotal) * 100) 
-      : 0;
-    
-    // Update analytics data with new calculated values
-    setAnalyticsData({
-      totalTips: filteredTips.length,
-      totalValue: parseFloat(totalValue.toFixed(2)),
-      avgTipValue: parseFloat(avgTipValue.toFixed(2)),
-      topToken,
-      weeklyGrowth,
-      monthlyVolume: weeklyVolume
-    });
-  };
-
   // Format weekly chart data
   const getWeeklyChartData = (): ChartData[] => {
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    return analyticsData.monthlyVolume.map((value, index) => ({
+    return metrics.monthlyVolume.map((value, index) => ({
       value,
       label: days[index % days.length],
       secondaryValue: `$${value.toFixed(2)} USDC`
     }));
+  };
+  
+  // Fetch analytics data from API
+  const fetchAnalytics = async (startDate?: string, endDate?: string) => {
+    setIsLoading(true);
+    try {
+      const data = await analyticsService.getDashboardAnalytics(startDate, endDate);
+      setMetrics(data.metrics);
+      setRecentTips(data.recentTips);
+      
+      // Apply current filters to recent tips
+      const filteredTips = applyFilters(data.recentTips, filters);
+      setVisibleTips(filteredTips.slice(0, 5));
+    } catch (error: any) {
+      console.error('Failed to fetch analytics:', error);
+      message.error(error?.response?.data?.message || 'Failed to load dashboard data 😔');
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   // Animation variants
@@ -437,28 +220,45 @@ export function Dashboard() {
     };
     
     setFilters(defaultFilters);
-    applyFilters(defaultFilters);
+    fetchAnalytics();
   };
 
   // Handle withdrawal submission
   const handleWithdrawal = async (address: string, amount: number): Promise<boolean> => {
-    console.log(`Withdrawing ${amount} USDC to wallet ${address}`);
+    console.log(`💸 Attempting to withdraw ${amount} USDC to wallet ${address}`);
     
-    // This would be an API call in production
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        // Update balance after successful withdrawal
-        setCurrentBalance(prev => parseFloat((prev - amount).toFixed(2)));
-        message.success('Withdrawal successful!');
-        resolve(true);
-      }, 2000);
-    });
+    try {
+      // In a complete implementation, you would call your backend API here
+      // Example: await api.transactions.createWithdrawal({ address, amount });
+      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API call
+      
+      message.success('Withdrawal initiated successfully! 🚀 It may take a few moments to reflect.');
+      
+      // Refresh analytics to get updated balance
+      await fetchAnalytics();
+      return true;
+    } catch (error: any) {
+      console.error('Withdrawal failed:', error);
+      message.error(error?.response?.data?.message || 'Withdrawal failed. Please try again. 😔');
+      return false;
+    }
   };
+
+  // Load analytics data on component mount
+  React.useEffect(() => {
+    fetchAnalytics();
+  }, []);
+
+  // Update the tip link whenever the username changes
+  React.useEffect(() => {
+    if (user?.username) {
+      // Update the tip link with the actual username
+    }
+  }, [user?.username]);
 
   return (
     <div className="min-h-screen bg-brand-background">
-      {/* Replace the LoggedInNav with our new SidebarNav */}
-      <SidebarNav username="johndoe.eth" />
+      <SidebarNav username={user?.username || 'loading...'} />
 
       <motion.div 
         className="container mx-auto px-4 py-8"
@@ -501,7 +301,7 @@ export function Dashboard() {
         >
           <MetricCard
             title="Total Earnings"
-            value={analyticsData.totalValue}
+            value={metrics.totalValue}
             prefix="$"
             suffix=" USDC"
             loading={isLoading}
@@ -510,24 +310,24 @@ export function Dashboard() {
           
           <MetricCard
             title="Total Tips"
-            value={analyticsData.totalTips}
+            value={metrics.totalTips}
             loading={isLoading}
             icon={<UserOutlined />}
           />
           
           <MetricCard
             title="Weekly Growth"
-            value={analyticsData.weeklyGrowth}
-            prefix={analyticsData.weeklyGrowth >= 0 ? "+" : ""}
+            value={metrics.weeklyGrowth}
+            prefix={metrics.weeklyGrowth >= 0 ? "+" : ""}
             suffix="%"
             loading={isLoading}
             icon={<RiseOutlined />}
-            iconBgClassName={analyticsData.weeklyGrowth >= 0 ? "bg-green-500/10" : "bg-red-500/10"}
+            iconBgClassName={metrics.weeklyGrowth >= 0 ? "bg-green-500/10" : "bg-red-500/10"}
           />
           
           <MetricCard
             title="Avg. Tip Value"
-            value={analyticsData.avgTipValue}
+            value={metrics.avgTipValue}
             prefix="$"
             suffix=" USDC"
             loading={isLoading}
@@ -551,7 +351,7 @@ export function Dashboard() {
           <div className="lg:col-span-2 space-y-8">
             <motion.div variants={itemVariants}>
               <DashboardCard
-                title="Your TipLink"
+                title="Your Personal Tip Link"
                 gradient={true}
                 className="mb-8"
               >
@@ -627,11 +427,11 @@ export function Dashboard() {
                   )}
                 </div>
                 
-                {visibleTips.length > 0 && allTips.length > visibleTips.length && (
+                {visibleTips.length > 0 && recentTips.length > visibleTips.length && (
                   <div className="mt-6 text-center">
                     <Button 
                       variant="outline"
-                      onClick={() => setVisibleTips(allTips.slice(0, visibleTips.length + 5))}
+                      onClick={() => setVisibleTips(recentTips.slice(0, visibleTips.length + 5))}
                     >
                       Load More
                     </Button>
@@ -648,10 +448,10 @@ export function Dashboard() {
               icon={<SettingOutlined />}
             >
               <form className="space-y-4">
-                <Input label="Display Name" defaultValue="John Doe" />
-                <Input label="Username" defaultValue="johndoe" />
-                <Input label="Wallet Address" defaultValue="0x1a2...3b4c" readOnly />
-                <Textarea label="Bio" defaultValue="Web3 creator and developer building in the Solana ecosystem." />
+                <Input label="Display Name" defaultValue={user?.displayName || ""} />
+                <Input label="Username" defaultValue={user?.username || ""} />
+                <Input label="Wallet Address" defaultValue={user?.walletAddress || "Not connected"} readOnly />
+                <Textarea label="Bio" defaultValue={user?.bio || ""} />
                 <Button className="w-full">Save Changes</Button>
               </form>
             </DashboardCard>

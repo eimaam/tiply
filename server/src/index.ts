@@ -11,6 +11,7 @@ import userRoutes from './routes/user.routes';
 import permissionsRoutes from './routes/permissions.routes';
 import transactionRoutes from './routes/transaction.routes';
 import waitlistRoutes from './routes/waitlist.routes';
+import analyticsRoutes from './routes/analytics.routes';
 import { connectDB } from './config/database';
 
 
@@ -53,6 +54,7 @@ app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/permissions', permissionsRoutes);
 app.use('/api/v1/transactions', transactionRoutes);
 app.use('/api/v1/waitlist', waitlistRoutes);
+app.use('/api/v1/analytics', analyticsRoutes);
 
 // Health check route
 app.use('/api/v1/health', (req: Request, res: Response) => {

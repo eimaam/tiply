@@ -76,4 +76,60 @@ export class CircleService {
 
     return data;
   }
+
+  /**
+   * Get the USDC balance for a user's Circle wallet
+   * @param walletId - The Circle wallet ID
+   * @returns The balance of USDC as a number, or 0 if not found or on error
+   */
+  static async getWalletUSDCBalance(walletId: string): Promise<number> {
+    if (!walletId) {
+      logger.warn('⚠️ Attempted to fetch balance for null/undefined walletId');
+      return 0;
+    }
+
+    try {
+      const client = circleClient();
+      const response = await this.getWalletBalancesFromCircle(walletId, client);
+      
+      // Find the USDC balance in token balances
+      const usdcBalance = response?.tokenBalances?.find((bal: any) => 
+        (bal.token?.symbol === 'USDC') || 
+        (bal.token?.name?.includes('USD Coin'))
+      );
+
+      if (usdcBalance && usdcBalance.amount) {
+        const balance = parseFloat(usdcBalance.amount);
+        logger.info(`💰 Fetched balance for wallet ${walletId}: ${balance} USDC`);
+        return balance;
+      }
+
+      logger.warn(`🤔 No USDC balance found for wallet ${walletId}`);
+      return 0; // No USDC balance found
+    } catch (error: any) {
+      logger.error(`❌ Error fetching balance for wallet ${walletId}: ${error.message}`);
+      return 0; // Return 0 on error
+    }
+  }
+
+  /**
+   * Make API call to Circle to get wallet balances
+   * @param walletId - The Circle wallet ID
+   * @param client - The Circle client
+   * @returns The response from Circle API with wallet balances
+   */
+  private static async getWalletBalancesFromCircle(
+    walletId: string, 
+    client: CircleDeveloperControlledWalletsClient
+  ): Promise<any> {
+    try {
+      logger.info(`📞 Calling Circle API to get balances for wallet ${walletId}`);
+      const response = await client.getWalletTokenBalance({ id: walletId });
+      console.dir(response, { depth: null });
+      return response.data;
+    } catch (error: any) {
+      logger.error(`❌ Failed to fetch balance from Circle: ${error.message}`);
+      throw error;
+    }
+  }
 }

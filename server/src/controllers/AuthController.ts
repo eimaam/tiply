@@ -23,7 +23,23 @@ import { JWT } from '../config/env.config';
 import { withMongoTransaction } from '../utils/mongoTransaction';
 import { defaultPermissionSets } from '../seeds/seed-data';
 import { CircleService } from '../services/circle.service';
+import { logger } from '../utils/logger';
 
+export const ONBOARDING_STEP_SEQUENCE: OnboardingStep[] = [
+  OnboardingStep.USERNAME,
+  OnboardingStep.PROFILE,
+  OnboardingStep.AVATAR,
+  OnboardingStep.CUSTOMIZE,
+  OnboardingStep.COMPLETE
+];
+
+const getNextOnboardingStep = (currentStep: OnboardingStep): OnboardingStep | null => {
+  const currentIndex = ONBOARDING_STEP_SEQUENCE.indexOf(currentStep);
+  if (currentIndex === -1 || currentIndex === ONBOARDING_STEP_SEQUENCE.length - 1) {
+    return null; // No next step
+  }
+  return ONBOARDING_STEP_SEQUENCE[currentIndex + 1];
+}
 
 export class AuthController {
   /**
@@ -343,44 +359,6 @@ export class AuthController {
   }
 
   /**
-   * Save wallet data during onboarding
-   * @param req - Express request object
-   * @param res - Express response object
-   */
-  static async saveWallet(req: AuthenticatedRequest, res: Response) {
-    try {
-      const userId = req.user.userId;
-      const { walletAddress } = req.body;
-
-      const user = await UserModel.findById(userId);
-      if (!user) {
-        return sendError({
-          res,
-          message: 'User not found',
-          statusCode: 404
-        });
-      }
-
-      // Update user with wallet info
-      user.walletAddress = walletAddress;
-      // Use enum string value instead of numeric index
-      user.currentOnboardingStep = OnboardingStep.WALLET; 
-      await user.save();
-
-      return sendSuccess({
-        res,
-        message: 'Wallet information saved successfully',
-        data: {
-          currentOnboardingStep: user.currentOnboardingStep,
-          walletAddress: user.walletAddress
-        }
-      });
-    } catch (error) {
-      return handleControllerError(error, res);
-    }
-  }
-
-  /**
    * Save username during onboarding
    * @param req - Express request object
    * @param res - Express response object
@@ -411,8 +389,18 @@ export class AuthController {
 
       // Update user with username
       user.username = username;
-      // Use enum string value instead of numeric index
-      user.currentOnboardingStep = OnboardingStep.USERNAME;
+      
+      // get the next step in the onboarding process after username a
+      const currentStepIndex = ONBOARDING_STEP_SEQUENCE.indexOf(user.currentOnboardingStep);
+      const nextStepIndex = currentStepIndex + 1;
+      const nextStep = ONBOARDING_STEP_SEQUENCE[nextStepIndex];
+      if (nextStep) {
+        user.currentOnboardingStep = nextStep;
+      } else {
+        user.currentOnboardingStep = OnboardingStep.COMPLETE;
+      }
+
+      // Save the user with the new username and onboarding step
       await user.save();
 
       return sendSuccess({
@@ -849,6 +837,19 @@ export class AuthController {
         });
       }
 
+      // Fetch balance from Circle if circleWalletId exists
+      let balance = 0;
+      if (user.circleWalletId) {
+        try {
+          balance = await CircleService.getWalletUSDCBalance(user.circleWalletId);
+        } catch (balanceError: any) {
+          logger.error(`⚠️ Failed to fetch balance for user ${userId} (${user.circleWalletId}): ${balanceError.message}`);
+          // Continue without balance, default is 0
+        }
+      } else {
+        logger.warn(`🤔 User ${userId} does not have a circleWalletId. Balance check skipped.`);
+      }
+
       // Return user data with role and permissions
       return sendSuccess({
         res,
@@ -863,6 +864,7 @@ export class AuthController {
             coverImageUrl: user.coverImageUrl,
             bio: user.bio,
             walletAddress: user.walletAddress,
+            circleWalletId: user.circleWalletId,
             status: user.status,
             role: user.role,
             permissions: user.permissions,
@@ -873,6 +875,7 @@ export class AuthController {
             emailVerified: user.emailVerified,
             isVerified: user.isVerified,
             isFeatured: user.isFeatured,
+            balance: balance, // Add the fetched balance here
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
           },

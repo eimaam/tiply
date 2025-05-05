@@ -51,7 +51,7 @@ export const hasRoleAccess = (
 };
 
 export const PROJECT_INFO = {
-  name: "TipLink",
+  name: "tiply",
   description: "A decentralized tipping platform for creators and communities.",
   url: "https://usetiply.xyz",
   image: "https://usetiply.xyz/logo.png",
