@@ -22,16 +22,28 @@ export function ProfileStep({
   onNext, 
   onPrevious 
 }: ProfileStepProps) {
+  // Track if the form has been interacted with
+  const [hasInteracted, setHasInteracted] = React.useState(false);
+  
+  // Initialize the component with pre-filled values if they exist
+  React.useEffect(() => {
+    if (displayName?.trim() || bio?.trim()) {
+      setHasInteracted(true);
+    }
+  }, []);
+
   // Check if we can continue to next step - only display name is required
-  const canContinue = displayName.trim().length >= 2
+  const canContinue = displayName.trim().length >= 2 && hasInteracted;
 
   const handleDisplayNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    setHasInteracted(true);
     onDisplayNameChange(value);
   };
 
   const handleBioChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
+    setHasInteracted(true);
     if (value.length <= 140) {
       onBioChange(value);
     }
@@ -60,6 +72,7 @@ export function ProfileStep({
             onChange={handleDisplayNameChange}
             required
             className={!displayName.trim() ? 'border-red-500' : ''}
+            autoFocus
           />
           {displayName.trim().length > 0 && displayName.trim().length < 2 && (
             <p className="text-sm text-red-500">Display name must be at least 2 characters</p>

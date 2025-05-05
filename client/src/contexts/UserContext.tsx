@@ -11,13 +11,11 @@ interface UserContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  onboardingRequired: boolean;
   login: (credentials: LoginCredentials) => Promise<User | void>;
   register: (data: SignupData) => Promise<User | void>;
   logout: () => Promise<void>;
   updateUser: (userData: Partial<User>) => Promise<any>;
   refreshUser: () => Promise<User | void>;
-  completeOnboardingStep: (step: string) => Promise<any>;
 }
 
 // context with initial default values
@@ -25,13 +23,11 @@ const UserContext = createContext<UserContextType>({
   user: null,
   isAuthenticated: false,
   isLoading: true,
-  onboardingRequired: false,
   login: async () => {},
   register: async () => {},
   logout: async () => {},
   updateUser: async () => {},
   refreshUser: async () => {},
-  completeOnboardingStep: async () => {},
 });
 
 // Custom hook for easy context consumption
@@ -41,7 +37,6 @@ export const useUser = () => useContext(UserContext);
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [onboardingRequired, setOnboardingRequired] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   const navigate = useNavigate();
 
@@ -69,16 +64,15 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(true);
       const response = await authService.login(credentials.email, credentials.password);
       
-      const authData: AuthData = response.data;
-      
+      const authData: AuthData = response.data?.data;
+      console.log('Login response:', authData);
       // Update user state
       setUser(authData.user);
       
       // Check if onboarding is needed
       if (!authData.user.onboardingCompleted) {
-        setOnboardingRequired(true);
         message.success('Welcome back! 🎉 Please complete your profile setup.');
-        navigate('/onboarding');
+        navigate('/onboarding/');
       } else {
         message.success('Welcome back! 🎉');
         navigate('/dashboard');
@@ -103,10 +97,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('Registration response:', authData);
       // Update user state
       setUser(authData.user);
-      setOnboardingRequired(true);
       
       message.success('Account created successfully! 🎉 Let\'s set up your profile.');
-      navigate('/onboarding');
+      navigate('/onboarding/step-1');
       
       return authData.user;
     } catch (error: any) {
@@ -175,14 +168,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (response.data && response.data?.data?.user) {
         setUser(response.data?.data?.user);
-        
-        // Check if onboarding is required
-        if (!response.data?.data?.user.onboardingCompleted) {
-          setOnboardingRequired(true);
-        } else {
-          setOnboardingRequired(false);
-        }
-        
         return response.data?.data?.user;
       } else {
         throw new Error('Invalid user data received');
@@ -190,34 +175,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       // Clear user state if not authenticated
       setUser(null);
-      setOnboardingRequired(false);
       throw error;
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  // Complete an onboarding step
-  const completeOnboardingStep = async (step: string) => {
-    try {
-      const response = await privateApi.post('/user/onboarding/step', { step });
-      
-      if (response.data) {
-        setUser(prevUser => ({
-          ...prevUser,
-          ...response.data
-        }));
-        
-        // Check if all onboarding is complete
-        if (response.data.onboardingCompleted) {
-          setOnboardingRequired(false);
-        }
-      }
-      
-      return response.data;
-    } catch (error) {
-      message.error('Failed to update onboarding progress. 😔');
-      throw error;
     }
   };
 
@@ -226,13 +186,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     isAuthenticated: !!user,
     isLoading: isLoading && !authChecked,
-    onboardingRequired,
     login,
     register,
     logout,
     updateUser,
     refreshUser,
-    completeOnboardingStep,
   };
 
   return (

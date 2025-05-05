@@ -144,6 +144,7 @@ function OnboardingStepRenderer({
   const { user } = useUser();
   const { currentStep, isLoading, completeStep, goToPreviousStep } = useOnboarding();
   const [isStepValid, setIsStepValid] = React.useState(false);
+  const [hasProfileBeenEdited, setHasProfileBeenEdited] = React.useState(false);
   
   // Handle next step action
   const handleNextStep = async () => {
@@ -153,6 +154,8 @@ function OnboardingStepRenderer({
         await completeStep(currentStep, {
           username: stepData.username
         });
+        // Reset the profile edited flag when moving to profile step
+        setHasProfileBeenEdited(false);
         break;
       case OnboardingStep.PROFILE:
         await completeStep(currentStep, {
@@ -169,7 +172,7 @@ function OnboardingStepRenderer({
       case OnboardingStep.CUSTOMIZE:
         await completeStep(currentStep, {
           // Send the full customization object that contains all visual and functional options
-          customizaticuon: stepData.customization,
+          customization: stepData.customization,
           // Also include these legacy fields for backward compatibility
           tipAmounts: stepData.customization.tipAmounts || stepData.tipAmounts,
           theme: stepData.customization.primaryColor || stepData.themeColor,
@@ -202,7 +205,7 @@ function OnboardingStepRenderer({
   // Validate step based on step type
   React.useEffect(() => {
     validateStep();
-  }, [stepData, currentStep]);
+  }, [stepData, currentStep, hasProfileBeenEdited]);
   
   const validateStep = () => {
     switch(currentStep) {
@@ -214,7 +217,10 @@ function OnboardingStepRenderer({
         );
         break;
       case OnboardingStep.PROFILE:
-        setIsStepValid(stepData.displayName !== '');
+        // Check if display name is valid, regardless of whether it's been edited or pre-filled
+        const hasValidDisplayName = stepData.displayName.trim().length >= 2;
+        // If the display name is valid, the step should be valid
+        setIsStepValid(hasValidDisplayName);
         break;
       case OnboardingStep.AVATAR:
         // Avatar is optional, always valid
@@ -226,6 +232,14 @@ function OnboardingStepRenderer({
         break;
       default:
         setIsStepValid(false);
+    }
+  };
+  
+  // When profile fields are updated, mark the profile as edited
+  const handleProfileFieldsUpdate = (field: string, value: any) => {
+    updateStepData(field, value);
+    if (currentStep === OnboardingStep.PROFILE) {
+      setHasProfileBeenEdited(true);
     }
   };
   
@@ -271,11 +285,12 @@ function OnboardingStepRenderer({
               displayName={stepData.displayName}
               bio={stepData.bio}
               onDisplayNameChange={(displayName) => {
-                updateStepData('displayName', displayName);
-              }
-              }
+                handleProfileFieldsUpdate('displayName', displayName);
+                setHasProfileBeenEdited(true);
+              }}
               onBioChange={(bio) => {
-                updateStepData('bio', bio);
+                handleProfileFieldsUpdate('bio', bio);
+                setHasProfileBeenEdited(true);
               }}
               onNext={handleNextStep}
               onPrevious={handleSkipStep}
