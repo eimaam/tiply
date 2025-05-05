@@ -48,13 +48,14 @@ export class TokenService {
     }
 
     /**
-     * Generate a refresh token for a user and store its hash in the database
+     * Generate a refresh token for a user, hash it, and calculate its expiry.
+     * Does NOT save to the database.
      * @param userId - The ID of the user
      * @param email - The email of the user
-     * @returns The generated refresh token
+     * @returns An object containing the refresh token value, its hash, and expiry date.
      */
-    static async generateRefreshToken(userId: string, email: string): Promise<string> {
-        // Generate refresh token with minimal payload (just enough to identify the user)
+    static async generateRefreshToken(userId: string, email: string): Promise<{ refreshToken: string, hashedToken: string, expiryDate: Date }> {
+        // Generate refresh token with minimal payload
         const payload: Partial<JwtPayload> = {
             userId,
             email,
@@ -63,33 +64,29 @@ export class TokenService {
         
         const refreshToken = this.generateToken(payload, JWT.REFRESH_SECRET || JWT.SECRET, this.REFRESH_TOKEN_EXPIRY);
         
-        // Hash the token before storing it to enhance security
+        // Hash the token
         const salt = await bcrypt.genSalt(10);
         const hashedToken = await bcrypt.hash(refreshToken, salt);
         
-        // Calculate expiry date for this token
+        // Calculate expiry date for this token (e.g., 7 days from now)
         const expiryDate = new Date();
-        expiryDate.setDate(expiryDate.getDate() + 7); // 7 days from now
         
-        // Store hashed token in user document
-        await UserModel.findByIdAndUpdate(userId, {
-            $push: {
-                refreshTokens: hashedToken,
-                refreshTokensExpiry: expiryDate
-            }
-        });
+        // For simplicity, using Date methods:
+        const expiryDays = parseInt(this.REFRESH_TOKEN_EXPIRY.replace('d', ''), 10) || 7;
+        expiryDate.setDate(expiryDate.getDate() + expiryDays); 
         
-        return refreshToken;
+        return { refreshToken, hashedToken, expiryDate };
     }
     
     /**
-     * Verify a refresh token and generate a new access token
+     * Verify a refresh token, rotate it, and generate a new access token.
+     * Handles saving the updated token state to the database.
      * @param refreshToken - The refresh token to verify
      * @returns New access token, refresh token and user data or null if refresh token is invalid
      */
     static async verifyRefreshToken(refreshToken: string): Promise<{ accessToken: string, refreshToken: string, user: any } | null> {
         try {
-            // Verify the refresh token
+            // Verify the refresh token JWT signature and expiry
             const decoded = jwt.verify(refreshToken, JWT.REFRESH_SECRET || JWT.SECRET) as JwtPayload;
             
             if (decoded.tokenType !== 'refresh') {
@@ -102,44 +99,63 @@ export class TokenService {
                 throw new Error('User not found');
             }
             
-            // Check if refresh token is still valid (exists in user's refreshTokens)
-            let isTokenValid = false;
+            // Check if refresh token hash exists and is not expired in the DB
+            let isTokenValidInDB = false;
             let tokenIndex = -1;
             
-            // Check each stored token hash
-            for (let i = 0; i < (user.refreshTokens?.length || 0); i++) {
-                const tokenHash = user.refreshTokens?.[i];
-                const tokenExpiry = user.refreshTokensExpiry?.[i];
-                
-                // Skip expired tokens
-                if (tokenExpiry && tokenExpiry < new Date()) {
-                    continue;
-                }
-                
-                // Compare the provided token with the stored hash
-                if (tokenHash) {
-                    const match = await bcrypt.compare(refreshToken, tokenHash);
-                    if (match) {
-                        isTokenValid = true;
-                        tokenIndex = i;
-                        break;
+            if (user.refreshTokens && user.refreshTokensExpiry) {
+                for (let i = 0; i < user.refreshTokens.length; i++) {
+                    const tokenHash = user.refreshTokens[i];
+                    const tokenExpiry = user.refreshTokensExpiry[i];
+                    
+                    // Skip if expiry is invalid or in the past
+                    if (!tokenExpiry || tokenExpiry < new Date()) {
+                        continue;
+                    }
+                    
+                    // Compare the provided token with the stored hash
+                    if (tokenHash) {
+                        const match = await bcrypt.compare(refreshToken, tokenHash);
+                        if (match) {
+                            isTokenValidInDB = true;
+                            tokenIndex = i;
+                            break; // Found the valid token
+                        }
                     }
                 }
             }
             
-            if (!isTokenValid) {
-                throw new Error('Refresh token is invalid or has been revoked');
+            if (!isTokenValidInDB) {
+                 // If token is not found or expired in DB, clean up potentially expired tokens for this user
+                await this.cleanupExpiredTokens(user._id.toString());
+                throw new Error('Refresh token is invalid, expired, or has been revoked');
             }
             
-            // Implement token rotation - revoke the current refresh token
-            if (tokenIndex !== -1 && user.refreshTokens) {
-                user.refreshTokens.splice(tokenIndex, 1);
-                if (user.refreshTokensExpiry) {
-                    user.refreshTokensExpiry.splice(tokenIndex, 1);
-                }
+            // --- Token Rotation ---
+            // 1. Remove the used token hash and expiry from the user object (in memory)
+            if (tokenIndex !== -1) {
+                user.refreshTokens?.splice(tokenIndex, 1);
+                user.refreshTokensExpiry?.splice(tokenIndex, 1);
             }
 
-            // Generate new access token
+            // 2. Generate new refresh token details (value, hash, expiry)
+            const { 
+                refreshToken: newRefreshTokenValue, 
+                hashedToken: newHashedToken, 
+                expiryDate: newExpiryDate 
+            } = await this.generateRefreshToken(user._id.toString(), user.email);
+
+            // 3. Add the new token hash and expiry to the user object (in memory)
+            user.refreshTokens = user.refreshTokens || [];
+            user.refreshTokensExpiry = user.refreshTokensExpiry || [];
+            user.refreshTokens.push(newHashedToken);
+            user.refreshTokensExpiry.push(newExpiryDate);
+            
+            // 4. Save the user document with the old token removed and the new one added
+            await user.save(); 
+            // Consider adding error handling around save
+
+            // 5. Generate new access token
             const accessToken = this.generateAccessToken(
                 user._id.toString(),
                 user.email,
@@ -147,19 +163,10 @@ export class TokenService {
                 user.permissions
             );
             
-            // Generate new refresh token (token rotation)
-            const newRefreshToken = await this.generateRefreshToken(user._id.toString(), user.email);
-            
-            // Clean up any expired tokens while we're at it
-            await this.cleanupExpiredTokens(user._id.toString());
-            
-            // Save the updated user document with removed old token
-            await user.save();
-            
-            // Return new access token, refresh token, and user info
+            // Return new access token, the *new* refresh token value, and user info
             return {
                 accessToken,
-                refreshToken: newRefreshToken,
+                refreshToken: newRefreshTokenValue, // Return the new plaintext token
                 user: {
                     id: user._id,
                     email: user.email,
@@ -167,67 +174,105 @@ export class TokenService {
                     permissions: user.permissions
                 }
             };
-        } catch (error) {
-            console.error('Refresh token verification failed:', error);
-            return null;
+        } catch (error: any) {
+            console.error('❌ Refresh token verification failed:', error.message);
+            // If JWT verification fails (expired/invalid signature), error.message will indicate that.
+            // If DB check fails, the custom error message is thrown.
+            return null; // Signal failure
         }
     }
 
     /**
-     * Revoke a refresh token
+     * Revoke a specific refresh token by removing its hash from the user's document.
      * @param userId - The ID of the user
-     * @param refreshToken - The refresh token to revoke
+     * @param refreshToken - The refresh token value to revoke
      */
     static async revokeRefreshToken(userId: string, refreshToken: string): Promise<void> {
         const user = await UserModel.findById(userId);
-        if (!user || !user.refreshTokens) return;
+        // Ensure arrays exist before proceeding
+        if (!user || !user.refreshTokens || !user.refreshTokensExpiry) return;
         
-        // Find and remove the specific token
+        let tokenRemoved = false;
+        const remainingTokens: string[] = [];
+        const remainingExpiries: Date[] = [];
+
         for (let i = 0; i < user.refreshTokens.length; i++) {
             const tokenHash = user.refreshTokens[i];
             
-            // Compare the provided token with the stored hash
+            // Compare the provided token value with the stored hash
             const match = await bcrypt.compare(refreshToken, tokenHash);
             if (match) {
-                // Remove this token and its expiry by index
-                user.refreshTokens.splice(i, 1);
-                if (user.refreshTokensExpiry && user.refreshTokensExpiry[i]) {
-                    user.refreshTokensExpiry.splice(i, 1);
+                // Don't include this token in the remaining arrays
+                tokenRemoved = true;
+            } else {
+                // Keep this token and its expiry
+                remainingTokens.push(tokenHash);
+                if (user.refreshTokensExpiry[i]) { // Check if expiry exists at this index
+                    remainingExpiries.push(user.refreshTokensExpiry[i]);
+                } else {
+                     // This case shouldn't happen if data is consistent, but handle defensively
+                     console.warn(`⚠️ Missing expiry for token hash at index ${i} for user ${userId}`);
+                     // Decide how to handle: remove token, keep with default expiry, etc.
+                     // For now, let's keep it consistent and remove the token if expiry is missing
                 }
-                
-                await user.save();
-                return;
             }
+        }
+
+        // If a token was identified and removed, update the user document
+        if (tokenRemoved) {
+            user.refreshTokens = remainingTokens;
+            user.refreshTokensExpiry = remainingExpiries;
+            try {
+                await user.save();
+                console.log(`🧹 Revoked refresh token for user ${userId}`);
+            } catch (saveError) {
+                console.error(`❌ Error saving user ${userId} after revoking token:`, saveError);
+            }
+        } else {
+             console.log(`🤷 Refresh token to revoke not found for user ${userId}`);
         }
     }
     
     /**
-     * Clean up expired refresh tokens for a user
+     * Clean up expired refresh token hashes and their expiries for a user.
      * @param userId - The ID of the user
      */
     static async cleanupExpiredTokens(userId: string): Promise<void> {
         const user = await UserModel.findById(userId);
+        // Ensure arrays exist
         if (!user || !user.refreshTokens || !user.refreshTokensExpiry) return;
         
         const now = new Date();
         const validTokens: string[] = [];
         const validExpiries: Date[] = [];
+        let changed = false;
         
         // Keep only non-expired tokens
         for (let i = 0; i < user.refreshTokens.length; i++) {
             const expiry = user.refreshTokensExpiry[i];
+            const tokenHash = user.refreshTokens[i]; // Get hash for logging if needed
             
+            // Check if expiry exists and is in the future
             if (expiry && expiry > now) {
-                validTokens.push(user.refreshTokens[i]);
+                validTokens.push(tokenHash);
                 validExpiries.push(expiry);
+            } else {
+                // Mark that changes are needed
+                changed = true;
+                // console.log(`🧹 Found expired token hash for user ${userId}: ${tokenHash}`);
             }
         }
         
-        // Update user document if any tokens were removed
-        if (validTokens.length < user.refreshTokens.length) {
+        // Update user document only if any tokens were removed
+        if (changed) {
             user.refreshTokens = validTokens;
             user.refreshTokensExpiry = validExpiries;
-            await user.save();
+            try {
+                await user.save();
+                console.log(`🧹 Cleaned up expired tokens for user ${userId}`);
+            } catch (saveError) {
+                console.error(`❌ Error saving user ${userId} after cleaning tokens:`, saveError);
+            }
         }
     }
 

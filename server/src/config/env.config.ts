@@ -15,9 +15,9 @@ const DATABASE = {
 // JWT configuration
 const JWT = {
   SECRET: process.env.JWT_SECRET as string,
-  EXPIRY: (process.env.JWT_EXPIRY as string) || "7d",
+  EXPIRY: (process.env.JWT_EXPIRY as string) || "30m", // Default access token expiry (e.g., 30 minutes)
   REFRESH_SECRET: process.env.JWT_REFRESH_SECRET as string,
-  REFRESH_EXPIRY: (process.env.JWT_REFRESH_EXPIRY as string) || "30d",
+  REFRESH_EXPIRY: (process.env.JWT_REFRESH_EXPIRY as string) || "7d", // Default refresh token expiry (7 days to match cookie)
 };
 
 // circle
