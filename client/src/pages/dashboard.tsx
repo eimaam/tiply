@@ -1,21 +1,16 @@
 import * as React from 'react';
 import { motion } from 'framer-motion';
-import { useUser } from '@/contexts/UserContext'; // Import useUser hook
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { useUser } from '@/contexts/UserContext';
+import { Tabs, message, Skeleton, Empty, Spin } from 'antd';
 import { 
   LineChartOutlined, 
-  CopyOutlined, 
   SettingOutlined, 
-  DollarOutlined,
   RiseOutlined,
   UserOutlined,
-  ClockCircleOutlined,
-  CheckCircleOutlined,
-  FilterOutlined,
   FileTextOutlined,
+  FilterOutlined,
   WalletOutlined,
+  LinkOutlined,
 } from '@ant-design/icons';
 import { SidebarNav } from '@/components/ui/sidebar-nav';
 import DataFilter from '@/components/ui/filters/DataFilter';
@@ -25,20 +20,19 @@ import { MetricCard } from '@/components/ui/dashboard/MetricCard';
 import { DashboardCard } from '@/components/ui/dashboard/DashboardCard';
 import { BarChart, ChartData } from '@/components/ui/dashboard/BarChart';
 import { TransactionCard } from '@/components/ui/dashboard/TransactionCard';
-import { Withdrawal } from '@/components/wallet/Withdrawal';
-import { message } from 'antd';
 import { TransactionStatusEnum } from '@/types/transaction';
 import { analyticsService, DashboardMetrics, RecentTip } from '@/services/analytics.service';
+import { ProfileSettings } from '@/components/dashboard/ProfileSettings';
+import { WalletSection } from '@/components/dashboard/WalletSection';
+import { TipLinkSection } from '@/components/dashboard/TipLinkSection';
 
 // Set current user's premium status for demo purposes
 const USER_IS_PREMIUM = false;
 
 export function Dashboard() {
-  const { user, refreshUser } = useUser(); // Get user data and refreshUser from context
-  const [copied, setCopied] = React.useState(false);
+  const { user, refreshUser } = useUser();
+  const [activeTabKey, setActiveTabKey] = React.useState('overview');
   const [isLoading, setIsLoading] = React.useState(true);
-  const tipLink = `https://usetiply.xyz/${user?.username || 'your-username'}`;
-  const [activeTab, setActiveTab] = React.useState('dashboard');
   
   // State for analytics data
   const [metrics, setMetrics] = React.useState<DashboardMetrics>({
@@ -72,27 +66,6 @@ export function Dashboard() {
   
   // Get balance from metrics or user
   const currentBalance = metrics.balance ?? user?.balance ?? 0;
-  
-  // Format relative time
-  const formatRelativeTime = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    
-    const minutes = Math.floor(diff / 1000 / 60);
-    const hours = Math.floor(diff / 1000 / 60 / 60);
-    const days = Math.floor(diff / 1000 / 60 / 60 / 24);
-    
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    return `${days}d ago`;
-  };
-
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(tipLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
   
   // Handle filter changes
   const handleFilterChange = (newFilters: DataFilterType) => {
@@ -234,8 +207,9 @@ export function Dashboard() {
       
       message.success('Withdrawal initiated successfully! 🚀 It may take a few moments to reflect.');
       
-      // Refresh analytics to get updated balance
+      // Refresh analytics and user data to get updated balance and wallet info
       await fetchAnalytics();
+      await refreshUser();
       return true;
     } catch (error: any) {
       console.error('Withdrawal failed:', error);
@@ -249,12 +223,350 @@ export function Dashboard() {
     fetchAnalytics();
   }, []);
 
-  // Update the tip link whenever the username changes
-  React.useEffect(() => {
-    if (user?.username) {
-      // Update the tip link with the actual username
-    }
-  }, [user?.username]);
+  // Tab items configuration
+  const tabItems = [
+    {
+      key: 'overview',
+      label: 'Overview',
+      children: (
+        <>
+          {/* Top Stats Section */}
+          <motion.div 
+            variants={itemVariants}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
+          >
+            <MetricCard
+              title="Total Earnings"
+              value={metrics.totalValue}
+              prefix="$"
+              suffix=" USDC"
+              loading={isLoading}
+              icon={<LineChartOutlined />}
+            />
+            
+            <MetricCard
+              title="Total Tips"
+              value={metrics.totalTips}
+              loading={isLoading}
+              icon={<UserOutlined />}
+            />
+            
+            <MetricCard
+              title="Weekly Growth"
+              value={metrics.weeklyGrowth}
+              prefix={metrics.weeklyGrowth >= 0 ? "+" : ""}
+              suffix="%"
+              loading={isLoading}
+              icon={<RiseOutlined />}
+              iconBgClassName={metrics.weeklyGrowth >= 0 ? "bg-green-500/10" : "bg-red-500/10"}
+            />
+            
+            <MetricCard
+              title="Available Balance"
+              value={currentBalance}
+              prefix="$"
+              suffix=" USDC"
+              loading={isLoading}
+              icon={<WalletOutlined />}
+              action={currentBalance > 0 ? (
+                <div className="text-xs flex space-x-1">
+                  <motion.div whileTap={{ scale: 0.95 }}>
+                    <button 
+                      onClick={() => setActiveTabKey('wallet')}
+                      className="text-brand-primary hover:text-brand-primary/80 hover:underline"
+                    >
+                      Withdraw
+                    </button>
+                  </motion.div>
+                </div>
+              ) : null}
+            />
+          </motion.div>
+
+          <div className="grid gap-6 lg:grid-cols-3">
+            {/* Left Column */}
+            <div className="lg:col-span-2 space-y-6">
+              <motion.div variants={itemVariants}>
+                <TipLinkSection username={user?.username || 'your-username'} />
+              </motion.div>
+
+              <motion.div variants={itemVariants}>
+                <DashboardCard
+                  title="Recent Tips"
+                  actionLabel="View All"
+                  onAction={() => console.log("View all tips")}
+                >
+                  <div className="space-y-4">
+                    {isLoading ? (
+                      // Loading skeleton
+                      Array(3).fill(0).map((_, index) => (
+                        <div key={index} className="p-4 rounded-lg border border-brand-border">
+                          <div className="flex justify-between items-start">
+                            <div className="space-y-2">
+                              <div className="h-5 w-24 bg-brand-border/30 rounded animate-pulse"></div>
+                              <div className="h-4 w-48 bg-brand-border/30 rounded animate-pulse"></div>
+                            </div>
+                            <div className="text-right space-y-2">
+                              <div className="h-5 w-16 bg-brand-border/30 rounded animate-pulse"></div>
+                              <div className="h-4 w-12 bg-brand-border/30 rounded animate-pulse ml-auto"></div>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : visibleTips.length > 0 ? (
+                      visibleTips.map(tip => (
+                        <TransactionCard
+                          key={tip.id}
+                          id={tip.id}
+                          type="tip"
+                          user={tip.sender}
+                          details={tip.message}
+                          timestamp={tip.timestamp}
+                          amount={tip.amount}
+                          currency={tip.tokenType}
+                          status={TransactionStatusEnum.COMPLETED}
+                        />
+                      ))
+                    ) : (
+                      <div className="py-12 text-center">
+                        <Empty 
+                          image={Empty.PRESENTED_IMAGE_SIMPLE}
+                          description={
+                            <span className="text-brand-muted-foreground">
+                              No tips found matching your filters
+                            </span>
+                          }
+                        />
+                        <span 
+                          className="text-brand-primary hover:underline cursor-pointer"
+                          onClick={resetFilters}
+                        >
+                          Reset Filters
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {visibleTips.length > 0 && recentTips.length > visibleTips.length && (
+                    <div className="mt-6 text-center">
+                      <motion.div whileTap={{ scale: 0.95 }}>
+                        <button 
+                          className="px-4 py-2 border border-brand-border rounded-md hover:bg-brand-accent/10 transition-colors"
+                          onClick={() => setVisibleTips(recentTips.slice(0, visibleTips.length + 5))}
+                        >
+                          Load More
+                        </button>
+                      </motion.div>
+                    </div>
+                  )}
+                </DashboardCard>
+              </motion.div>
+            </div>
+            
+            {/* Right Column */}
+            <motion.div variants={itemVariants} className="space-y-6">
+              {/* Weekly Volume Chart */}
+              <DashboardCard
+                title="Weekly Volume"
+              >
+                <BarChart
+                  data={getWeeklyChartData()}
+                  height={160}
+                  isLoading={isLoading}
+                  valuePrefix="$"
+                  valueSuffix=" USDC"
+                  showTooltip={true}
+                />
+              </DashboardCard>
+              
+              {/* Filters Card */}
+              <DashboardCard
+                title="Filter Tips"
+                className="mb-8"
+                actionLabel={!USER_IS_PREMIUM ? 'Upgrade' : undefined}
+                onAction={!USER_IS_PREMIUM ? () => { window.location.href = '/pricing'; } : undefined}
+                icon={<FilterOutlined />}
+              >
+                <DataFilter
+                  filters={filters}
+                  onFilterChange={handleFilterChange}
+                  isPremiumUser={USER_IS_PREMIUM}
+                  availableTypes={[TransactionType.TIP]}
+                  availableStatuses={Object.values(TransactionStatus)}
+                  currencies={Object.values(CurrencyType)}
+                  showReset={true}
+                  className="mb-4"
+                  compact={true}
+                />
+                
+                {!USER_IS_PREMIUM && (
+                  <div className="mt-4 p-3 bg-brand-primary/5 border border-brand-primary/20 rounded-lg text-sm">
+                    <p className="text-brand-muted-foreground">Free users can view up to 14 days of tips. <a href="/pricing" className="text-brand-primary hover:underline">Upgrade</a> for more data.</p>
+                  </div>
+                )}
+              </DashboardCard>
+            </motion.div>
+          </div>
+        </>
+      )
+    },
+    {
+      key: 'profile',
+      label: 'Profile Settings',
+      children: (
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <DashboardCard
+              title="Edit Your Profile"
+              icon={<SettingOutlined />}
+            >
+              <ProfileSettings />
+            </DashboardCard>
+          </div>
+          
+          <div>
+            <DashboardCard
+              title="Preview"
+              className="mb-6"
+            >
+              <div className="flex flex-col items-center space-y-4 p-4">
+                <div className="relative">
+                  <div className="w-24 h-24 rounded-full overflow-hidden">
+                    {user?.avatarUrl ? (
+                      <img 
+                        src={user.avatarUrl} 
+                        alt={user.displayName || user.username} 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-brand-primary/20 text-brand-primary text-2xl">
+                        {user?.displayName?.[0] || user?.username?.[0] || 'U'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="text-center">
+                  <h3 className="font-bold text-lg">{user?.displayName || 'Your Name'}</h3>
+                  <p className="text-brand-muted-foreground">@{user?.username || 'username'}</p>
+                  <p className="text-sm mt-2 max-w-xs text-center line-clamp-3">
+                    {user?.bio || 'Your bio will appear here...'}
+                  </p>
+                </div>
+                
+                <div className="mt-2 p-3 bg-brand-accent/10 rounded-lg w-full text-center">
+                  <p className="text-brand-primary text-sm">This is how your profile looks to visitors</p>
+                </div>
+              </div>
+            </DashboardCard>
+            
+            <DashboardCard
+              title="Profile URL"
+            >
+              <div className="text-center">
+                <p className="mb-3 text-sm text-brand-muted-foreground">
+                  Your public profile is available at:
+                </p>
+                <div className="font-mono text-sm bg-brand-accent/10 p-3 rounded-lg">
+                  usetiply.xyz/{user?.username || 'your-username'}
+                </div>
+                <a 
+                  href={`https://usetiply.xyz/${user?.username || 'your-username'}`}
+                  target="_blank"
+                  rel="noopener noreferrer" 
+                  className="mt-3 inline-block text-brand-primary hover:underline text-sm"
+                >
+                  Open in new tab <LinkOutlined />
+                </a>
+              </div>
+            </DashboardCard>
+          </div>
+        </div>
+      )
+    },
+    {
+      key: 'wallet',
+      label: 'Wallet',
+      children: (
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <WalletSection 
+              user={user} 
+              balance={currentBalance}
+              onWithdraw={handleWithdrawal}
+            />
+          </div>
+          
+          <div className="space-y-6">
+            <DashboardCard
+              title="Transaction History"
+            >
+              <div className="space-y-4">
+                {isLoading ? (
+                  <div className="py-6 text-center">
+                    <Spin />
+                    <div className="mt-2 text-brand-muted-foreground text-sm">
+                      Loading transactions...
+                    </div>
+                  </div>
+                ) : visibleTips.length > 0 ? (
+                  visibleTips.slice(0, 3).map(tip => (
+                    <TransactionCard
+                      key={tip.id}
+                      id={tip.id}
+                      type="tip"
+                      user={tip.sender}
+                      details={tip.message}
+                      timestamp={tip.timestamp}
+                      amount={tip.amount}
+                      currency={tip.tokenType}
+                      status={TransactionStatusEnum.COMPLETED}
+                    />
+                  ))
+                ) : (
+                  <div className="py-12 text-center">
+                    <Empty 
+                      image={Empty.PRESENTED_IMAGE_SIMPLE}
+                      description={
+                        <span className="text-brand-muted-foreground">
+                          No recent transactions
+                        </span>
+                      }
+                    />
+                  </div>
+                )}
+              </div>
+              
+              {visibleTips.length > 0 && (
+                <div className="mt-4 text-center">
+                  <span 
+                    className="text-brand-primary hover:underline cursor-pointer text-sm"
+                    onClick={() => setActiveTabKey('overview')}
+                  >
+                    View all transactions
+                  </span>
+                </div>
+              )}
+              
+            </DashboardCard>
+            
+            <DashboardCard
+              title="Balance Chart"
+            >
+              <BarChart
+                data={getWeeklyChartData()}
+                height={160}
+                isLoading={isLoading}
+                valuePrefix="$"
+                valueSuffix=" USDC"
+                showTooltip={true}
+              />
+            </DashboardCard>
+          </div>
+        </div>
+      )
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-brand-background">
@@ -266,240 +578,13 @@ export function Dashboard() {
         initial="hidden"
         animate="show"
       >
-        {/* Dashboard Filter */}
-        <motion.div variants={itemVariants}>
-          <DashboardCard
-            title="Dashboard Filters"
-            className="mb-8"
-            actionLabel={!USER_IS_PREMIUM ? 'Upgrade for advanced filters' : undefined}
-            onAction={!USER_IS_PREMIUM ? () => { window.location.href = '/pricing'; } : undefined}
-            icon={!USER_IS_PREMIUM ? <FilterOutlined /> : undefined}
-          >
-            <DataFilter
-              filters={filters}
-              onFilterChange={handleFilterChange}
-              isPremiumUser={USER_IS_PREMIUM}
-              availableTypes={[TransactionType.TIP]}
-              availableStatuses={Object.values(TransactionStatus)}
-              currencies={Object.values(CurrencyType)}
-              showReset={true}
-              className="mb-4"
-            />
-            
-            {!USER_IS_PREMIUM && (
-              <div className="mt-4 p-3 bg-brand-primary/5 border border-brand-primary/20 rounded-lg text-sm">
-                <p className="text-brand-muted-foreground">Free users can view up to 14 days of transaction history. <a href="/pricing" className="text-brand-primary hover:underline">Upgrade to premium</a> for unlimited history and advanced filters.</p>
-              </div>
-            )}
-          </DashboardCard>
-        </motion.div>
-
-        {/* Top Stats Section */}
-        <motion.div 
-          variants={itemVariants}
-          className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8"
-        >
-          <MetricCard
-            title="Total Earnings"
-            value={metrics.totalValue}
-            prefix="$"
-            suffix=" USDC"
-            loading={isLoading}
-            icon={<DollarOutlined />}
-          />
-          
-          <MetricCard
-            title="Total Tips"
-            value={metrics.totalTips}
-            loading={isLoading}
-            icon={<UserOutlined />}
-          />
-          
-          <MetricCard
-            title="Weekly Growth"
-            value={metrics.weeklyGrowth}
-            prefix={metrics.weeklyGrowth >= 0 ? "+" : ""}
-            suffix="%"
-            loading={isLoading}
-            icon={<RiseOutlined />}
-            iconBgClassName={metrics.weeklyGrowth >= 0 ? "bg-green-500/10" : "bg-red-500/10"}
-          />
-          
-          <MetricCard
-            title="Avg. Tip Value"
-            value={metrics.avgTipValue}
-            prefix="$"
-            suffix=" USDC"
-            loading={isLoading}
-            icon={<LineChartOutlined />}
-          />
-
-          <MetricCard
-            title="Available Balance"
-            value={currentBalance}
-            prefix="$"
-            suffix=" USDC"
-            loading={isLoading}
-            icon={<WalletOutlined />}
-            action={<Withdrawal balance={currentBalance} onWithdraw={handleWithdrawal} />}
-          />
-        </motion.div>
-        
-        {/* Main Content */}
-        <div className="grid gap-8 lg:grid-cols-3">
-          {/* Left Column */}
-          <div className="lg:col-span-2 space-y-8">
-            <motion.div variants={itemVariants}>
-              <DashboardCard
-                title="Your Personal Tip Link"
-                gradient={true}
-                className="mb-8"
-              >
-                <div className="flex gap-2 relative z-10">
-                  <Input 
-                    value={tipLink} 
-                    readOnly
-                    className="font-mono text-sm bg-opacity-70"
-                  />
-                  <Button
-                    variant={copied ? "default" : "outline"}
-                    size="icon"
-                    onClick={copyToClipboard}
-                    className="shrink-0 transition-all duration-300"
-                  >
-                    {copied ? <CheckCircleOutlined /> : <CopyOutlined />}
-                  </Button>
-                </div>
-                <p className="mt-4 text-sm text-brand-muted-foreground">
-                  Share this link with your audience to receive tips. Tips are sent directly to your connected wallet.
-                </p>
-              </DashboardCard>
-            </motion.div>
-
-            <motion.div variants={itemVariants}>
-              <DashboardCard
-                title="Recent Tips"
-                actionLabel="View All"
-                onAction={() => console.log("View all tips")}
-              >
-                <div className="space-y-4">
-                  {isLoading ? (
-                    // Loading skeleton
-                    Array(3).fill(0).map((_, index) => (
-                      <div key={index} className="p-4 rounded-lg border border-brand-border">
-                        <div className="flex justify-between items-start">
-                          <div className="space-y-2">
-                            <div className="h-5 w-24 bg-brand-border/30 rounded animate-pulse"></div>
-                            <div className="h-4 w-48 bg-brand-border/30 rounded animate-pulse"></div>
-                          </div>
-                          <div className="text-right space-y-2">
-                            <div className="h-5 w-16 bg-brand-border/30 rounded animate-pulse"></div>
-                            <div className="h-4 w-12 bg-brand-border/30 rounded animate-pulse ml-auto"></div>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  ) : visibleTips.length > 0 ? (
-                    visibleTips.map(tip => (
-                      <TransactionCard
-                        key={tip.id}
-                        id={tip.id}
-                        type="tip"
-                        user={tip.sender}
-                        details={tip.message}
-                        timestamp={tip.timestamp}
-                        amount={tip.amount}
-                        currency={tip.tokenType}
-                        status={TransactionStatusEnum.COMPLETED}
-                      />
-                    ))
-                  ) : (
-                    <div className="py-12 text-center">
-                      <FileTextOutlined style={{ fontSize: '24px' }} className="text-brand-muted-foreground mb-2" />
-                      <p className="text-brand-muted-foreground">No tips found matching your filters</p>
-                      <Button 
-                        variant="link" 
-                        onClick={resetFilters}
-                      >
-                        Reset Filters
-                      </Button>
-                    </div>
-                  )}
-                </div>
-                
-                {visibleTips.length > 0 && recentTips.length > visibleTips.length && (
-                  <div className="mt-6 text-center">
-                    <Button 
-                      variant="outline"
-                      onClick={() => setVisibleTips(recentTips.slice(0, visibleTips.length + 5))}
-                    >
-                      Load More
-                    </Button>
-                  </div>
-                )}
-              </DashboardCard>
-            </motion.div>
-          </div>
-          
-          {/* Right Column */}
-          <motion.div variants={itemVariants} className="space-y-8">
-            <DashboardCard
-              title="Profile Settings"
-              icon={<SettingOutlined />}
-            >
-              <form className="space-y-4">
-                <Input label="Display Name" defaultValue={user?.displayName || ""} />
-                <Input label="Username" defaultValue={user?.username || ""} />
-                <Input label="Wallet Address" defaultValue={user?.walletAddress || "Not connected"} readOnly />
-                <Textarea label="Bio" defaultValue={user?.bio || ""} />
-                <Button className="w-full">Save Changes</Button>
-              </form>
-            </DashboardCard>
-
-            <DashboardCard
-              title="Token Preferences"
-            >
-              <div className="space-y-4">
-                <div className="p-4 rounded-lg border border-brand-border flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold">$</div>
-                    <span className="ml-3">USDC</span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="text-brand-muted-foreground mr-2">Primary</span>
-                    <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-                  </div>
-                </div>
-                <div className="p-4 rounded-lg border border-brand-border flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold">S</div>
-                    <span className="ml-3">SOL</span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="text-brand-muted-foreground mr-2">Enabled</span>
-                    <div className="w-4 h-4 border-2 border-brand-border rounded-full"></div>
-                  </div>
-                </div>
-                {/* TODO: enable feature later */}
-                {/* <Button variant="outline" className="w-full">+ Add Token</Button> */}
-              </div>
-            </DashboardCard>
-            
-            {/* Weekly Volume Chart */}
-            <DashboardCard
-              title="Weekly Volume"
-            >
-              <BarChart
-                data={getWeeklyChartData()}
-                height={160}
-                isLoading={isLoading}
-                valuePrefix="$"
-                valueSuffix=" USDC"
-                showTooltip={true}
-              />
-            </DashboardCard>
-          </motion.div>
-        </div>
+        <Tabs 
+          activeKey={activeTabKey}
+          onChange={setActiveTabKey}
+          items={tabItems}
+          className="dashboard-tabs"
+          type="card"
+        />
       </motion.div>
     </div>
   );

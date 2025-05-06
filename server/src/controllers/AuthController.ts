@@ -616,7 +616,6 @@ export class AuthController {
           statusCode: 400,
           error: [
             !user.username ? 'Username is required' : null,
-            !user.walletAddress ? 'Wallet address is required' : null
           ].filter(Boolean)
         });
       }
@@ -643,7 +642,7 @@ export class AuthController {
 
       const walletData = {
         circleWalletId: (wallet as any)?.id,
-        walletAddress: (wallet as any)?.address,
+        depositWalletAddress: (wallet as any)?.address,  // Use depositWalletAddress here
       }
 
       // update user with wallet ID
@@ -668,7 +667,8 @@ export class AuthController {
           permissions: user.permissions,
           onboardingCompleted: user.onboardingCompleted,
           emailVerified: user.emailVerified,
-          walletAddress: user.walletAddress,
+          depositWalletAddress: user.depositWalletAddress, // Changed from walletAddress
+          withdrawalWalletAddress: user.withdrawalWalletAddress,
           avatarUrl: user.avatarUrl,
           coverImageUrl: user.coverImageUrl,
           bio: user.bio
@@ -863,7 +863,8 @@ export class AuthController {
             avatarUrl: user.avatarUrl,
             coverImageUrl: user.coverImageUrl,
             bio: user.bio,
-            walletAddress: user.walletAddress,
+            depositWalletAddress: user.depositWalletAddress, // Changed from walletAddress
+            withdrawalWalletAddress: user.withdrawalWalletAddress,
             circleWalletId: user.circleWalletId,
             status: user.status,
             role: user.role,
@@ -875,7 +876,7 @@ export class AuthController {
             emailVerified: user.emailVerified,
             isVerified: user.isVerified,
             isFeatured: user.isFeatured,
-            balance: balance, // Add the fetched balance here
+            balance: balance,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
           },

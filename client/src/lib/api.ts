@@ -202,7 +202,7 @@ export const api = {
     getProfile: () => 
       privateApi.get('/user/profile', { withCredentials: true }),
     updateProfile: (userData: any) => 
-      privateApi.put('/user/profile', userData, { withCredentials: true }),
+      privateApi.put('/users/profile', userData, { withCredentials: true }),
     joinWaitlist: (email: string, name: string) =>
       publicApi.post('/waitlist', { email, name }),
   },

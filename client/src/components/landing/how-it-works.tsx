@@ -4,7 +4,7 @@ import { WalletOutlined, ShareAltOutlined, DollarOutlined } from '@ant-design/ic
 
 const steps = [
   {
-    title: 'Create a TipLink',
+    title: 'Create a tip link',
     description: 'Sign in with your wallet and claim your username.',
     icon: WalletOutlined,
   },

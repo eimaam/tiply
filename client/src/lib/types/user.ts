@@ -48,7 +48,8 @@ export interface User {
   bio?: string;
   avatarUrl?: string;
   coverImageUrl?: string;
-  walletAddress?: string;
+  depositWalletAddress?: string; // Circle-generated deposit wallet address
+  withdrawalWalletAddress?: string; // User's personal withdrawal wallet address
   circleWalletId?: string;
   socialLinks?: SocialLinks;
   customization?: ProfileCustomization;

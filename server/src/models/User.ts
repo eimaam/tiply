@@ -106,7 +106,8 @@ export interface IUser extends Document {
   updatedAt: Date;
   // circle
   circleWalletId?: string;
-  walletAddress?: string;
+  depositWalletAddress?: string; // Circle-generated deposit wallet address
+  withdrawalWalletAddress?: string; // User-provided withdrawal wallet address
   // refresh token management
   refreshTokens?: string[]; // Store active refresh token hashes
   refreshTokensExpiry?: Date[]; // Store expiration dates for refresh tokens
@@ -241,7 +242,11 @@ const UserSchema = new Schema<IUser>(
       default: false,
     },
     circleWalletId: { type: String, default: null },
-    walletAddress: {
+    depositWalletAddress: {
+      type: String,
+      trim: true,
+    },
+    withdrawalWalletAddress: {
       type: String,
       trim: true,
     },
@@ -265,7 +270,8 @@ const UserSchema = new Schema<IUser>(
 // Create indexes for faster queries
 UserSchema.index({ username: 1 });
 UserSchema.index({ email: 1 });
-UserSchema.index({ walletAddress: 1 });
+UserSchema.index({ depositWalletAddress: 1 });
+UserSchema.index({ withdrawalWalletAddress: 1 });
 UserSchema.index({ status: 1 });
 UserSchema.index({ role: 1 });
 UserSchema.index({ isFeatured: 1, status: 1 });

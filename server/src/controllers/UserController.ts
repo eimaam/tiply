@@ -5,6 +5,9 @@ import { UserRole } from "../models/UserRole";
 import { responseHandler } from "../utils/responseHandler";
 import { logger } from "../utils/logger";
 import { defaultPermissionSets } from "../seeds/seed-data";
+import { AuthenticatedRequest } from '../types/user.types';
+import { sendSuccess, sendError, handleControllerError } from '../utils/responseHandler';
+import mongoose from 'mongoose';
 
 export class UserController {
   /**
@@ -112,43 +115,81 @@ export class UserController {
 
   /**
    * Update user profile
+   * @param req - Express request object with user data from auth middleware
+   * @param res - Express response object
    */
   static async updateProfile(req: AuthenticatedRequest, res: Response) {
     try {
       const { userId } = req.user;
-      const { displayName, bio, socialLinks, avatarUrl, coverImageUrl } =
-        req.body;
+      const { displayName, bio, username, socialLinks, avatarUrl, coverImageUrl } = req.body;
 
+      // Get current user
       const user = await UserModel.findById(userId);
-
       if (!user) {
-        return responseHandler.notFound(res, "User not found");
+        return sendError({
+          res,
+          message: 'User not found',
+          statusCode: 404
+        });
       }
 
-      // Update profile fields if provided
-      if (displayName !== undefined) user.displayName = displayName;
-      if (bio !== undefined) user.bio = bio;
-      if (socialLinks !== undefined) user.socialLinks = socialLinks;
-      if (avatarUrl !== undefined) user.avatarUrl = avatarUrl;
-      if (coverImageUrl !== undefined) user.coverImageUrl = coverImageUrl;
+      // If username is being changed, check if it's available
+      if (username && username !== user.username) {
+        // Basic username validation
+        if (username.length < 3) {
+          return sendError({
+            res,
+            message: 'Username must be at least 3 characters long',
+            statusCode: 400
+          });
+        }
 
+        if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+          return sendError({
+            res,
+            message: 'Username can only contain letters, numbers, and underscores',
+            statusCode: 400
+          });
+        }
+
+        // Check if username already exists
+        const existingUser = await UserModel.findOne({ username, _id: { $ne: userId } });
+        if (existingUser) {
+          return sendError({
+            res,
+            message: 'This username is already taken',
+            statusCode: 409
+          });
+        }
+      }
+
+      // Update fields if provided
+      if (displayName) user.displayName = displayName;
+      if (username) user.username = username;
+      if (bio !== undefined) user.bio = bio; // Allow empty bio
+      if (socialLinks) user.socialLinks = { ...user.socialLinks, ...socialLinks };
+      if (avatarUrl) user.avatarUrl = avatarUrl;
+      if (coverImageUrl) user.coverImageUrl = coverImageUrl;
+
+      // Save the updated user
       await user.save();
 
-      return responseHandler.success(res, "Profile updated successfully ✨", {
-        user: {
-          id: user._id,
-          username: user.username,
-          email: user.email,
+      return sendSuccess({
+        res,
+        message: 'Profile updated successfully! ✨',
+        data: {
           displayName: user.displayName,
+          username: user.username,
           bio: user.bio,
           socialLinks: user.socialLinks,
           avatarUrl: user.avatarUrl,
           coverImageUrl: user.coverImageUrl,
-        },
+          withdrawalWalletAddress: user.withdrawalWalletAddress,
+          depositWalletAddress: user.depositWalletAddress,
+        }
       });
     } catch (error) {
-      logger.error("Error updating profile:", error);
-      return responseHandler.serverError(res, "Failed to update profile");
+      return handleControllerError(error, res);
     }
   }
 
@@ -477,6 +518,110 @@ export class UserController {
         res,
         "Failed to toggle featured status"
       );
+    }
+  }
+
+  /**
+   * Update user's withdrawal wallet address
+   * @param req - Express request object
+   * @param res - Express response object
+   */
+  static async updateWalletAddress(req: AuthenticatedRequest, res: Response) {
+    try {
+      const { userId } = req.user;
+      const { withdrawalWalletAddress } = req.body;
+
+      if (!withdrawalWalletAddress) {
+        return sendError({
+          res,
+          message: 'Withdrawal wallet address is required',
+          statusCode: 400
+        });
+      }
+
+      // Validate wallet address format (basic validation for Solana)
+      if (!/^[a-zA-Z0-9]{32,44}$/.test(withdrawalWalletAddress)) {
+        return sendError({
+          res,
+          message: 'Invalid wallet address format',
+          statusCode: 400
+        });
+      }
+
+      const user = await UserModel.findById(userId);
+      if (!user) {
+        return sendError({
+          res,
+          message: 'User not found',
+          statusCode: 404
+        });
+      }
+
+      // Update user with the new withdrawal wallet address
+      user.withdrawalWalletAddress = withdrawalWalletAddress;
+      await user.save();
+
+      return sendSuccess({
+        res,
+        message: 'Withdrawal wallet address updated successfully! 💼',
+        data: {
+          withdrawalWalletAddress: user.withdrawalWalletAddress
+        }
+      });
+    } catch (error) {
+      return handleControllerError(error, res);
+    }
+  }
+
+  /**
+   * Check if a username is available
+   * @param req - Express request object
+   * @param res - Express response object
+   */
+  static async checkUsernameAvailability(req: AuthenticatedRequest, res: Response) {
+    try {
+      const { username } = req.params;
+      
+      // Basic username validation
+      if (!username || username.length < 3) {
+        return sendError({
+          res,
+          message: 'Username must be at least 3 characters long',
+          statusCode: 400
+        });
+      }
+
+      if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+        return sendError({
+          res,
+          message: 'Username can only contain letters, numbers, and underscores',
+          statusCode: 400
+        });
+      }
+
+      // Check if username exists (excluding current user)
+      const existingUser = await UserModel.findOne({ 
+        username, 
+        _id: { $ne: req.user.userId } 
+      });
+
+      if (existingUser) {
+        return sendError({
+          res,
+          message: 'This username is already taken 😕',
+          statusCode: 409
+        });
+      }
+
+      return sendSuccess({
+        res,
+        message: 'Username is available! 🎉',
+        data: {
+          available: true
+        }
+      });
+    } catch (error) {
+      return handleControllerError(error, res);
     }
   }
 }

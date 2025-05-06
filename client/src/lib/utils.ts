@@ -72,3 +72,51 @@ export const PUBLIC_ROUTES = [
   '/contact-us',
   '/about-us'
 ];
+
+/**
+ * Validates if a string is a valid Solana address
+ * @param address The address to validate
+ * @returns boolean indicating if the address is valid
+ */
+export const isValidSolanaAddress = (address: string): boolean => {
+  // Basic validation for Solana addresses
+  // Solana addresses are base58 encoded and typically 32-44 characters
+  if (!address || typeof address !== 'string') {
+    return false;
+  }
+  
+  // Check length
+  if (address.length < 32 || address.length > 44) {
+    return false;
+  }
+  
+  // Check for valid base58 characters (alphanumeric without 0, O, I, l)
+  const base58Regex = /^[1-9A-HJ-NP-Za-km-z]+$/;
+  return base58Regex.test(address);
+};
+
+/**
+ * Creates a debounced function that delays invoking the provided function
+ * until after the specified wait time has elapsed since the last time it was invoked
+ * @param func The function to debounce
+ * @param wait The number of milliseconds to delay
+ * @returns A debounced version of the function
+ */
+export const debounce = <T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): ((...args: Parameters<T>) => void) => {
+  let timeout: ReturnType<typeof setTimeout> | null = null;
+  
+  return function(...args: Parameters<T>): void {
+    const later = () => {
+      timeout = null;
+      func(...args);
+    };
+    
+    if (timeout !== null) {
+      clearTimeout(timeout);
+    }
+    timeout = setTimeout(later, wait);
+  };
+};

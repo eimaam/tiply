@@ -1,21 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Modal, Form, InputNumber, Spin } from 'antd';
 import { WalletOutlined, LoadingOutlined } from '@ant-design/icons';
+import { useUser } from '@/contexts/UserContext';
+import { transactionService, WithdrawalRequest } from '@/services/transaction.service';
 
 interface WithdrawalProps {
   balance: number;
-  onWithdraw: (address: string, amount: number) => Promise<boolean>;
+  onWithdraw?: (address: string, amount: number) => Promise<boolean>;
 }
 
 export const Withdrawal: React.FC<WithdrawalProps> = ({ balance, onWithdraw }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [form] = Form.useForm();
+  const { user, refreshUser } = useUser();
+
+  // When user data changes, set the default withdrawal address if available
+  useEffect(() => {
+    if (user?.withdrawalWalletAddress && form) {
+      form.setFieldsValue({
+        address: user.withdrawalWalletAddress
+      });
+    }
+  }, [user, form]);
 
   const showWithdrawalModal = () => {
     setIsModalOpen(true);
+    
+    // Use withdrawalWalletAddress if available, otherwise leave empty
+    form.setFieldsValue({
+      address: user?.withdrawalWalletAddress || '',
+      amount: balance > 0 ? Math.min(balance, 5) : 0
+    });
   };
 
   const handleCancel = () => {
@@ -26,12 +44,32 @@ export const Withdrawal: React.FC<WithdrawalProps> = ({ balance, onWithdraw }) =
   const handleSubmit = async (values: { address: string; amount: number }) => {
     try {
       setIsLoading(true);
-      const success = await onWithdraw(values.address, values.amount);
-      
-      if (success) {
-        form.resetFields();
-        setIsModalOpen(false);
+
+      // If custom onWithdraw handler is provided, use it
+      if (onWithdraw) {
+        const success = await onWithdraw(values.address, values.amount);
+        if (success) {
+          form.resetFields();
+          setIsModalOpen(false);
+        }
+        return;
       }
+
+      // Otherwise use our transaction service
+      const withdrawalData: WithdrawalRequest = {
+        address: values.address,
+        amount: values.amount
+      };
+
+      await transactionService.createWithdrawal(withdrawalData);
+      
+      // Refresh user data to get updated withdrawal address
+      await refreshUser();
+      
+      form.resetFields();
+      setIsModalOpen(false);
+    } catch (error: any) {
+      console.error('Withdrawal failed:', error);
     } finally {
       setIsLoading(false);
     }
@@ -74,7 +112,10 @@ export const Withdrawal: React.FC<WithdrawalProps> = ({ balance, onWithdraw }) =
           form={form}
           layout="vertical"
           onFinish={handleSubmit}
-          initialValues={{ amount: balance > 0 ? Math.min(balance, 5) : 0 }}
+          initialValues={{ 
+            address: user?.withdrawalWalletAddress || '',
+            amount: balance > 0 ? Math.min(balance, 5) : 0 
+          }}
         >
           <div className="mb-4 p-3 bg-brand-primary/5 border border-brand-primary/20 rounded-lg">
             <p className="text-brand-muted-foreground text-sm">
@@ -88,10 +129,11 @@ export const Withdrawal: React.FC<WithdrawalProps> = ({ balance, onWithdraw }) =
             rules={[
               { required: true, message: 'Please enter your wallet address' },
               { 
-                pattern: /^[a-zA-Z0-9]{30,44}$/, 
+                pattern: /^[a-zA-Z0-9]{32,44}$/, 
                 message: 'Please enter a valid Solana wallet address'
               }
             ]}
+            help="This address will be saved for future withdrawals"
           >
             <Input placeholder="Your Solana wallet address" />
           </Form.Item>

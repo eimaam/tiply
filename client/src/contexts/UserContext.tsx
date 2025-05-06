@@ -5,6 +5,7 @@ import { User, AuthData, LoginCredentials, SignupData } from '@/lib/types/user';
 import { authService } from '@/services/auth.service';
 import { privateApi } from '@/lib/api';
 import api from '@/lib/api';
+import { userService } from '@/services/user.service';
 
 // Define the context state type
 interface UserContextType {
@@ -139,19 +140,22 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateUser = async (userData: Partial<User>) => {
     try {
       setIsLoading(true);
-      const response = await privateApi.put('/user/profile', userData);
+      // Use the userService instead of direct API call
+      const updatedUser = await userService.updateProfile(userData);
       
-      if (response.data) {
+      if (updatedUser) {
+        // Merge the updated data with existing user data
         setUser(prevUser => ({
           ...prevUser,
-          ...response.data
+          ...updatedUser
         }));
+        
+        message.success('Profile updated successfully! ✨');
+        return updatedUser;
       }
-      
-      message.success('Profile updated successfully! ✨');
-      return response.data;
-    } catch (error) {
-      message.error('Failed to update profile. 😔 Please try again.');
+      throw new Error('Failed to update profile');
+    } catch (error: any) {
+      message.error(error?.response?.data?.message || 'Failed to update profile. 😔 Please try again.');
       throw error;
     } finally {
       setIsLoading(false);

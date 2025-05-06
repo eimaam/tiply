@@ -126,7 +126,7 @@ function App() {
         {/* Public routes */}
         <Route path="/" element={<Homepage />} />
         <Route path="/waitlist" element={<WaitlistPage />} />
-        <Route path="/t/:username" element={<TipPage />} />
+        <Route path="/:username" element={<TipPage />} />
         <Route path="/faq" element={<FAQPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/about" element={<AboutUsPage />} />

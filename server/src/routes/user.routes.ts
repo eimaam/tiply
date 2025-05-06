@@ -65,6 +65,21 @@ router.put('/profile',
 );
 
 /**
+ * @route PUT /api/v1/users/profile/wallet
+ * @desc Update withdrawal wallet address
+ * @access Private
+ */
+router.put('/profile/wallet',
+  authenticate,
+  validation({
+    body: {
+      withdrawalWalletAddress: { type: 'string', required: true }
+    }
+  }),
+  withAuth(UserController.updateWalletAddress)
+);
+
+/**
  * @route PUT /api/v1/users/password
  * @desc Update user password
  * @access Private
