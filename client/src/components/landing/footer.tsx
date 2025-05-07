@@ -2,7 +2,7 @@ import * as React from 'react'
 import { Link } from 'react-router-dom'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { PROJECT_INFO, smoothScrollTo } from '@/lib/utils'
-import logo from '@/assets/images/tipp-link-logo.png'
+import logo from '@/assets/images/tiply-logo.png'
 import PoweredBySolanaIllustration from '@/assets/images/illustrations/powered-by-solana'
 
 const navigation = {

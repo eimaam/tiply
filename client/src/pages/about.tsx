@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { Navbar } from '@/components/landing/navbar'
 import { Footer } from '@/components/landing/footer'
-import logo from '@/assets/images/tipp-link-logo.png'
+import logo from '@/assets/images/tiply-logo.png'
 import PoweredBySolanaIllustration from '@/assets/images/illustrations/powered-by-solana'
 import { Image } from 'antd'
 

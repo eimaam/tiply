@@ -11,7 +11,7 @@ import {
   ThunderboltOutlined,
   DollarOutlined,
 } from "@ant-design/icons";
-import logo from "../assets/images/tipp-link-logo.png";
+import logo from "../assets/images/tiply-logo.png";
 import { PROJECT_INFO } from "@/lib/utils";
 import { generalService } from "@/services/general.service";
 import Container from "@/components/ui/container";

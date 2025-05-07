@@ -95,7 +95,7 @@ const projectSettings = {
   branding: {
     primaryColor: '#6C3BFC',
     secondaryColor: '#FFCD29',
-    logoUrl: '/assets/images/tipp-link-logo.png',
+    logoUrl: '/assets/images/tiply-logo.png',
     favicon: '/public/favicon.png',
     enableCustomBranding: true,
     creatorCustomBrandingEnabled: true

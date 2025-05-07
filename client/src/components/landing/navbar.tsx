@@ -5,7 +5,7 @@ import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { motion, AnimatePresence } from 'framer-motion'
 import { smoothScrollTo } from '@/lib/utils'
 import { MenuOutlined, CloseOutlined } from '@ant-design/icons'
-import logo from '@/assets/images/tipp-link-logo.png'
+import logo from '@/assets/images/tiply-logo.png'
 
 // Define all navigation links in one place
 type NavLink = {

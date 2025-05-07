@@ -13,7 +13,7 @@ import {
   DollarOutlined,
   QuestionCircleOutlined,
 } from '@ant-design/icons';
-import logo from '@/assets/images/tipp-link-logo.png';
+import logo from '@/assets/images/tiply-logo.png'
 import { 
   Modal, 
   ModalHeader, 
@@ -180,11 +180,9 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
           <div className='flex justify-between items-center'>
             {/* Logo */}
             <div className="flex items-center space-x-2">
-              <img 
-                src="/logo.png" 
-                alt="tiply Logo" 
-                className="h-8 w-auto"
-              />
+      
+      
+              <img src={logo} alt="tiply logo" className="h-12 w-auto" />
               <span className="text-xl font-bold">tiply</span>
             </div>
             

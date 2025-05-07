@@ -11,7 +11,7 @@ import {
   MenuOutlined,
   CloseOutlined
 } from '@ant-design/icons';
-import logo from '@/assets/images/tipp-link-logo.png'
+import logo from '@/assets/images/tiply-logo.png'
 
 
 interface LoggedInNavProps {
