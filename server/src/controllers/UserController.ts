@@ -96,20 +96,61 @@ export class UserController {
     try {
       const { username } = req.params;
 
-      const user = await UserModel.findOne({ username }).select(
-        "-password -emailVerificationToken -emailVerificationExpires -passwordResetToken -passwordResetExpires -email"
+      if (!username) {
+        return sendError({
+          res,
+          message: 'Username is required',
+          statusCode: 400
+        });
+      }
+
+      const user = await UserModel.findOne({ username, status: UserStatus.ACTIVE }).select(
+        'username displayName bio avatarUrl coverImageUrl socialLinks customization depositWalletAddress circleWalletId isFeatured'
       );
 
       if (!user) {
-        return responseHandler.notFound(res, "User not found");
+        return sendError({
+          res,
+          message: 'Creator profile not found. Please check the username and try again. 😕',
+          statusCode: 404
+        });
       }
 
-      return responseHandler.success(res, "User retrieved successfully", {
-        user,
+      // Format the response to match what the tip page expects
+      const formattedUser = {
+        username: user.username,
+        displayName: user.displayName || user.username,
+        bio: user.bio || '',
+        profileImage: user.avatarUrl, // Map avatarUrl to profileImage for frontend
+        coverImageUrl: user.coverImageUrl,
+        customization: {
+          primaryColor: user.customization?.primaryColor,
+          backgroundColor: user.customization?.backgroundColor,
+          tipOptions: user.customization?.tipOptions || [
+            { amount: 1, label: '$1' },
+            { amount: 5, label: '$5' },
+            { amount: 10, label: '$10' },
+            { amount: 25, label: '$25' }
+          ],
+          minimumTipAmount: user.customization?.minimumTipAmount || 1,
+          allowCustomAmounts: user.customization?.allowCustomAmounts !== false,
+          enableCustomMessage: user.customization?.enableCustomMessage !== false
+        },
+        depositWalletAddress: user.depositWalletAddress,
+        circleWalletId: user.circleWalletId,
+        socialLinks: user.socialLinks || {}
+      };
+
+      return sendSuccess({
+        res,
+        message: 'User retrieved successfully ✨',
+        data: {
+          user: formattedUser
+        }
       });
     } catch (error) {
-      logger.error("Error retrieving user by username:", error);
-      return responseHandler.serverError(res, "Failed to retrieve user");
+      logger.error('Error retrieving user by username:', error);
+      return handleControllerError(error, res);
     }
   }
 

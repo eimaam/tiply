@@ -1,51 +1,56 @@
-import mongoose, { Schema, model, Document } from 'mongoose';
+import mongoose, { Document, Schema } from 'mongoose';
 
-// Interface for Tip document
 export interface ITip extends Document {
-    recipientAddress: string; // Solana wallet address of recipient
-    amount: number;
-    currency: 'USDC';
-    status: 'pending' | 'completed' | 'failed';
-    transactionId?: string;
-    message?: string; // Optional message from tipper
-    createdAt: Date;
+  recipientId: mongoose.Types.ObjectId;
+  amount: number;
+  message?: string;
+  transactionSignature: string;
+  tipperWallet?: string;
+  status: 'pending' | 'confirmed' | 'failed';
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-// Define the schema
-const tipSchema = new Schema<ITip>({
-    recipientAddress: {
-        type: String,
-        required: true,
+const TipSchema = new Schema<ITip>(
+  {
+    recipientId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
     },
     amount: {
-        type: Number,
-        required: true,
-    },
-    currency: {
-        type: String,
-        enum: ['USDC'],
-        default: 'USDC',
-        required: true,
-    },
-    status: {
-        type: String,
-        enum: ['pending', 'completed', 'failed'],
-        default: 'pending',
-        required: true,
-    },
-    transactionId: {
-        type: String,
-        required: false,
+      type: Number,
+      required: true,
+      min: 0,
     },
     message: {
-        type: String,
-        required: false,
+      type: String,
+      maxlength: 500,
     },
-    createdAt: {
-        type: Date,
-        default: Date.now,
-        required: true,
+    transactionSignature: {
+      type: String,
+      required: true,
+      unique: true,
     },
-});
+    tipperWallet: {
+      type: String,
+      trim: true,
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'confirmed', 'failed'],
+      default: 'pending',
+    }
+  },
+  {
+    timestamps: true,
+  }
+);
 
-export const TipModel = mongoose.models.TipModel || model<ITip>('Tip', tipSchema);
+// Create indexes for faster queries
+TipSchema.index({ recipientId: 1 });
+TipSchema.index({ transactionSignature: 1 }, { unique: true });
+TipSchema.index({ status: 1 });
+TipSchema.index({ createdAt: -1 });
+
+export const TipModel = mongoose.models.Tip || mongoose.model<ITip>('Tip', TipSchema);

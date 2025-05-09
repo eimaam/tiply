@@ -6,10 +6,10 @@ import {
   CheckCircleOutlined,
   SettingOutlined,
   QuestionCircleOutlined,
-  PaletteOutlined
+  EditOutlined // Changed from PaletteOutlined to EditOutlined
 } from '@ant-design/icons';
 import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
+import { Button, ButtonProps } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { DashboardCard } from '@/components/ui/dashboard/DashboardCard';
 import { userService } from '@/services/user.service';
@@ -133,14 +133,14 @@ export const TipSettings: React.FC<TipSettingsProps> = ({ className }) => {
 
   // Color presets for the accent color picker
   const colorPresets = [
-    '#8B5CF6', // Violet
-    '#EC4899', // Pink
-    '#3B82F6', // Blue
-    '#10B981', // Green
-    '#F59E0B', // Amber
-    '#EF4444', // Red
+    '#a78bfa', // Primary violet
+    '#38bdf8', // Sky blue
+    '#f59e0b', // Amber
+    '#10b981', // Emerald
+    '#ef4444', // Red
+    '#6b7280', // Gray
     '#000000', // Black
-    '#6B7280'  // Gray
+    '#ffffff'  // White
   ];
 
   return (
@@ -382,10 +382,9 @@ export const TipSettings: React.FC<TipSettingsProps> = ({ className }) => {
         
         <Form.Item className="mt-8">
           <Button
-            type="submit"
+            variant="default"
             size="lg"
             className="w-full md:w-auto"
-            loading={isSubmitting}
             disabled={isSubmitting}
           >
             {isSubmitting ? 'Saving Changes...' : 'Save Changes'}
@@ -396,7 +395,7 @@ export const TipSettings: React.FC<TipSettingsProps> = ({ className }) => {
       {/* Preview Section - could be implemented in a future iteration */}
       <div className="border-t border-brand-border mt-8 pt-6">
         <h3 className="text-lg font-medium mb-4 flex items-center">
-          <PaletteOutlined className="mr-2" />
+          <EditOutlined className="mr-2" />
           Preview
         </h3>
         <p className="text-sm text-brand-muted-foreground mb-4">

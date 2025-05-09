@@ -4,12 +4,20 @@ import { authenticate, withAuth, hasRole } from '../middleware/auth.middleware';
 import { 
   apiRateLimiter, 
   financialOperationsRateLimiter, 
-  adminRateLimiter 
+  adminRateLimiter,
+  globalRateLimiter,
 } from '../middleware/rate-limit.middleware';
 
 const router = Router();
 
+/**
+ * Public Transaction Routes
+ */
+// Process a tip (public) - Apply rate limiting to prevent abuse
+router.post('/tip', globalRateLimiter, TransactionController.processTip);
 
+// Get transaction status by ID (public) - For checking tip status
+router.get('/status/:transactionId', globalRateLimiter, TransactionController.getTransactionStatus);
 
 /**
  * User Transaction Routes

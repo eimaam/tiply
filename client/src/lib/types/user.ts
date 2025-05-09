@@ -109,13 +109,14 @@ export interface ProfileCustomization {
   showTipCounter?: boolean;
   enableCustomMessage?: boolean;
   tipOptions?: TipOption[];
+  minimumTipAmount?: number;
+  allowCustomAmounts?: boolean;
 }
 
 /**
  * Interface for tip option
  */
 export interface TipOption {
-  id: string;
   amount: number;
   label?: string;
   isDefault?: boolean;

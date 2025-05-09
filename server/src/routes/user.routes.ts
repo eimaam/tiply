@@ -46,6 +46,15 @@ router.get('/username/:username',
 );
 
 /**
+ * @route GET /api/v1/users/profile/:username
+ * @desc Get public profile for tipping page by username
+ * @access Public
+ */
+router.get('/profile/:username',
+  UserController.getUserByUsername
+);
+
+/**
  * @route PUT /api/v1/users/profile
  * @desc Update user profile
  * @access Private

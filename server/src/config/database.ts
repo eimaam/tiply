@@ -8,7 +8,7 @@ import { MONGODB_URI, NodeEnv } from './env.config';
 // Connection options
 const options = {
   autoIndex: true,
-  connectTimeoutMS: 10000, // Give up initial connection after 10 seconds
+  connectTimeoutMS: 15000, // Give up initial connection after 15 seconds
   socketTimeoutMS: 45000,  // Close sockets after 45 seconds of inactivity
   family: 4                // Use IPv4, skip trying IPv6
 };
@@ -17,7 +17,7 @@ const options = {
 export const connectDB = async (): Promise<void> => {
   try {
     logger.info('🔄 Connecting to MongoDB...');
-    await mongoose.connect(MONGODB_URI, options);
+    await mongoose.connect(MONGODB_URI as string, options);
     
     logger.info(`✅ MongoDB connected successfully! [${NodeEnv}]`);
     

@@ -561,4 +561,54 @@ export class TransactionController {
       return handleControllerError(error, res);
     }
   }
+
+  /**
+   * Get transaction status by ID (public endpoint for tip page)
+   * @param req - Express request object
+   * @param res - Express response object
+   */
+  static async getTransactionStatus(req: Request, res: Response) {
+    try {
+      const { transactionId } = req.params;
+
+      // Validate transaction ID
+      if (!mongoose.Types.ObjectId.isValid(transactionId)) {
+        return sendError({
+          res,
+          message: 'Invalid transaction ID format',
+          statusCode: 400,
+          code: 'INVALID_ID_FORMAT'
+        });
+      }
+
+      // Find transaction
+      const transaction = await Transaction.findById(transactionId).select('status amount txHash createdAt completedAt');
+
+      if (!transaction) {
+        return sendError({
+          res,
+          message: 'Transaction not found',
+          statusCode: 404
+        });
+      }
+
+      // Return transaction status
+      return sendSuccess({
+        res,
+        message: 'Transaction status retrieved successfully',
+        data: {
+          transaction: {
+            id: transaction._id,
+            status: transaction.status,
+            amount: transaction.amount,
+            txHash: transaction.txHash,
+            createdAt: transaction.createdAt,
+            completedAt: transaction.completedAt
+          }
+        }
+      });
+    } catch (error) {
+      return handleControllerError(error, res);
+    }
+  }
 }

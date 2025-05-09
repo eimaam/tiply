@@ -10,7 +10,6 @@ import { Onboarding } from '@/pages/auth/onboarding';
 
 // Dashboard components
 import { Dashboard } from '@/pages/dashboard';
-import { TipPage } from '@/pages/tip';
 
 // Admin components
 import AdminDashboard from '@/pages/admin/dashboard';
@@ -31,6 +30,7 @@ import { Spin } from 'antd';
 import { useUser } from './contexts/UserContext';
 import { OnboardingProvider } from './contexts/OnboardingContext';
 import Homepage from './pages/home';
+import TipPage from './pages/tip';
 
 interface ProtectedRouteProps {
   element: React.ReactNode;

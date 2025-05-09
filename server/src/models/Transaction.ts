@@ -4,9 +4,9 @@ import mongoose, { Document, Schema } from 'mongoose';
  * Transaction types enum
  */
 export enum TransactionType {
-  DEPOSIT = 'deposit',
-  WITHDRAWAL = 'withdrawal',
   TIP = 'tip',
+  WITHDRAWAL = 'withdrawal',
+  DEPOSIT = 'deposit',
   REFUND = 'refund',
   FEE = 'fee',
 }
@@ -40,6 +40,13 @@ export interface ITransaction extends Document {
   createdAt: Date;
   updatedAt: Date;
   completedAt?: Date;
+  txSignature: string;
+  message?: string;
+  recipient: Schema.Types.ObjectId;
+  tipperWallet?: string;
+  fee: number;
+  netAmount: number;
+  blockExplorerUrl: string;
 }
 
 /**
@@ -102,6 +109,41 @@ const TransactionSchema = new Schema<ITransaction>(
     completedAt: {
       type: Date,
     },
+    txSignature: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+    },
+    message: {
+      type: String,
+      trim: true,
+      maxlength: 500,
+    },
+    recipient: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
+    },
+    tipperWallet: {
+      type: String,
+      trim: true,
+    },
+    fee: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    netAmount: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    blockExplorerUrl: {
+      type: String,
+      required: true,
+    },
   },
   {
     timestamps: true,
@@ -112,6 +154,8 @@ const TransactionSchema = new Schema<ITransaction>(
 TransactionSchema.index({ createdAt: -1 });
 TransactionSchema.index({ userId: 1, type: 1 });
 TransactionSchema.index({ userId: 1, status: 1 });
+TransactionSchema.index({ status: 1, createdAt: -1 });
+TransactionSchema.index({ recipient: 1, createdAt: -1 });
 
 // Export the Transaction model
 export const Transaction = mongoose.model<ITransaction>('Transaction', TransactionSchema);

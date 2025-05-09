@@ -132,4 +132,82 @@ export class CircleService {
       throw error;
     }
   }
+
+  /**
+   * Calculate platform fee for a given amount
+   * @param amount - The tip amount
+   * @returns The fee amount
+   */
+  static calculatePlatformFee(amount: number): number {
+    // 2.5% platform fee
+    return parseFloat((amount * 0.025).toFixed(2));
+  }
+
+  /**
+   * Process a USDC transfer between wallets
+   * @param senderAddress - The sender's wallet address
+   * @param recipientAddress - The recipient's wallet address
+   * @param amount - Amount in USDC to transfer
+   * @param idempotencyKey - Unique key to prevent duplicate transfers
+   */
+  static async processUSDCTransfer(
+    senderAddress: string,
+    recipientAddress: string,
+    amount: number,
+    idempotencyKey: string
+  ) {
+    const client = circleClient();
+
+    try {
+      logger.info(`💸 Processing USDC transfer of ${amount} from ${senderAddress} to ${recipientAddress}`);
+      
+      const transferReq = {
+        idempotencyKey,
+        source: {
+          type: 'wallet',
+          id: senderAddress
+        },
+        destination: {
+          type: 'wallet',
+          id: recipientAddress
+        },
+        amount: {
+          amount: amount.toString(),
+          currency: 'USD'
+        },
+        tokenId: CIRCLE_ENV.usdcTokenId
+      };
+
+      const response = await client.transfer(transferReq);
+      
+      if (!response.data?.id) {
+        throw new Error('Transfer failed: No transaction ID received');
+      }
+
+      logger.info(`✨ Transfer successful! Transaction ID: ${response.data.id}`);
+      return {
+        transactionId: response.data.id,
+        status: response.data.status
+      };
+    } catch (error: any) {
+      logger.error(`❌ Transfer failed: ${error?.message || 'Unknown error'}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Get transfer status from Circle
+   * @param transferId - The Circle transfer ID
+   */
+  static async getTransferStatus(transferId: string) {
+    const client = circleClient();
+
+    try {
+      const response = await client.getTransfer(transferId);
+      return response.data?.status || 'unknown';
+    } catch (error: any) {
+      logger.error(`❌ Error getting transfer status: ${error?.message || 'Unknown error'}`);
+      throw error;
+    }
+  }
 }
