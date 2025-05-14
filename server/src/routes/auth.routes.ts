@@ -111,4 +111,11 @@ router.get(
   AuthController.checkUsername
 );
 
+// Get onboarding status
+router.get(
+  "/onboarding/status",
+  authenticate,
+  withAuth(AuthController.getOnboardingStatus)
+);
+
 export default router;

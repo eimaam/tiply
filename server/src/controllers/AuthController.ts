@@ -426,10 +426,10 @@ export class AuthController {
       const userId = req.user.userId;
       const { displayName, bio, socialLinks } = req.body;
 
-      if (!displayName) {
+      if (!displayName || displayName.trim().length < 2) {
         return sendError({
           res,
-          message: 'Display name is required',
+          message: 'Display name is required and must be at least 2 characters',
           statusCode: 400
         });
       }
@@ -443,7 +443,7 @@ export class AuthController {
         });
       }
 
-      user.displayName = displayName;
+      user.displayName = displayName.trim();
       user.bio = bio || user.bio;
       user.socialLinks = socialLinks || user.socialLinks;
       // Update to set the next step (AVATAR) instead of the current step (PROFILE)
@@ -473,15 +473,16 @@ export class AuthController {
   static async saveAvatar(req: AuthenticatedRequest, res: Response) {
     try {
       const userId = req.user.userId;
-      const { avatarUrl } = req.body;
+      const { avatarUrl, coverImageUrl } = req.body;
 
-      if (!avatarUrl) {
-        return sendError({
-          res,
-          message: 'Avatar URL is required',
-          statusCode: 400
-        });
-      }
+      // Avatar is now optional, so we don't require it
+      // if (!avatarUrl) {
+      //   return sendError({
+      //     res,
+      //     message: 'Avatar URL is required',
+      //     statusCode: 400
+      //   });
+      // }
 
       const user = await UserModel.findById(userId);
       if (!user) {
@@ -492,31 +493,32 @@ export class AuthController {
         });
       }
 
-      
-
-      const updateData = {
-        avatarUrl: avatarUrl,
-        // take onboarding step to the next step
+      const updateData: any = {
+        // Only update these fields if they are provided
+        ...(avatarUrl && { avatarUrl }),
+        ...(coverImageUrl && { coverImageUrl }),
+        // Always update the onboarding step to the next step
         currentOnboardingStep: OnboardingStep.CUSTOMIZE
-      }
+      };
 
-      // Update user with avatar URL
+      // Update user with avatar and/or cover image URL
       const updatedUser = await UserModel.findByIdAndUpdate(userId, updateData, { new: true });
 
       if (!updatedUser) {
         return sendError({
           res,
-          message: 'Failed to update avatar',
+          message: 'Failed to update profile images',
           statusCode: 500
         });
       }
 
       return sendSuccess({
         res,
-        message: 'Avatar updated successfully 🖼️',
+        message: 'Profile images updated successfully 🖼️',
         data: {
           currentOnboardingStep: updatedUser.currentOnboardingStep,
           avatarUrl: updatedUser.avatarUrl,
+          coverImageUrl: updatedUser.coverImageUrl
         }
       });
     } catch (error) {
@@ -969,6 +971,49 @@ export class AuthController {
       return sendSuccess({
         res,
         message: 'Logged out successfully! 👋'
+      });
+    } catch (error) {
+      return handleControllerError(error, res);
+    }
+  }
+
+  /**
+   * Get onboarding status for the current user
+   * @param req - Express request object
+   * @param res - Express response object
+   */
+  static async getOnboardingStatus(req: AuthenticatedRequest, res: Response) {
+    try {
+      const { userId } = req.user;
+      
+      const user = await UserModel.findById(userId);
+      if (!user) {
+        return sendError({
+          res,
+          message: 'User not found',
+          statusCode: 404
+        });
+      }
+      
+      return sendSuccess({
+        res,
+        message: 'Onboarding status retrieved successfully',
+        data: {
+          onboardingCompleted: user.onboardingCompleted,
+          currentOnboardingStep: user.currentOnboardingStep,
+          username: user.username,
+          displayName: user.displayName,
+          avatarUrl: user.avatarUrl,
+          coverImageUrl: user.coverImageUrl,
+          customization: user.customization ? true : false,
+          hasData: {
+            username: !!user.username,
+            displayName: !!user.displayName,
+            bio: !!user.bio,
+            avatarUrl: !!user.avatarUrl,
+            coverImageUrl: !!user.coverImageUrl
+          }
+        }
       });
     } catch (error) {
       return handleControllerError(error, res);

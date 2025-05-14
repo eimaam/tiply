@@ -14,7 +14,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
-        display: ['"Space Grotesk"', 'sans-serif'],
+        spaceGrotesk: ['"Space Grotesk"', 'sans-serif'],
         mono: ['IBM Plex Mono', 'monospace'],
       },
       colors: {
@@ -83,22 +83,11 @@ const config: Config = {
           DEFAULT: '#121214',
           light: '#ffffff',
         },
-        'brand-background': '#f8f8f8',
-        'brand-foreground': '#242424',
-        'brand-surface': '#ffffff',
-        'brand-secondary': '#f0f0f0',
-        'brand-border': '#e0e0e0',
-        'muted-foreground': '#636363',
       },
       borderRadius: {
-        'sm': '0.25rem',
-        DEFAULT: '0.375rem',
-        'md': '0.5rem',
-        'lg': '0.75rem',
-        'xl': '1rem',
-        '2xl': '1.5rem',
-        '3xl': '2rem',
-        'full': '9999px',
+        lg: '0.5rem',
+        md: 'calc(0.5rem - 2px)',
+        sm: 'calc(0.5rem - 4px)',
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
@@ -131,11 +120,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [
-    require('@tailwindcss/forms'),
-    require('@tailwindcss/typography'),
-    require('@tailwindcss/aspect-ratio'),
-  ],
+  plugins: [],
 }
 
 export default config

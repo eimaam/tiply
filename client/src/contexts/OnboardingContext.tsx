@@ -25,6 +25,7 @@ export interface StepData {
   tipAmounts?: number[];
   theme?: string;
   additionalSettings?: Record<string, any>;
+  customization?: any; // Add direct customization object
 }
 
 // Define step sequence for navigation
@@ -219,23 +220,40 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           });
           break;
         case OnboardingStep.AVATAR:
-          await privateApi.post('/auth/onboarding/avatar', {
-            avatarUrl: data.avatarUrl,
-            coverImageUrl: data.coverImageUrl
-          });
+          // Only save avatar data if both fields are empty
+          if (data.avatarUrl || data.coverImageUrl) {
+            await privateApi.post('/auth/onboarding/avatar', {
+              avatarUrl: data.avatarUrl,
+              coverImageUrl: data.coverImageUrl
+            });
+            message.success('Profile images saved! 💾');
+          } else {
+            // If both fields are empty, skip the API call but don't show an error
+            console.log('Skipping empty avatar save');
+          }
+          // Don't show generic "Progress saved" message for this step
           break;
         case OnboardingStep.CUSTOMIZE:
-          await privateApi.post('/auth/onboarding/customization', {
-            tipAmounts: data.tipAmounts,
-            theme: data.theme,
-            additionalSettings: data.additionalSettings
-          });
+          // If we have direct customization data, use it directly
+          if (data.customization) {
+            await privateApi.post('/auth/onboarding/customization', data.customization);
+          } else {
+            // Fall back to the old way for backward compatibility
+            await privateApi.post('/auth/onboarding/customization', {
+              tipAmounts: data.tipAmounts,
+              theme: data.theme,
+              additionalSettings: data.additionalSettings
+            });
+          }
           break;
         default:
           throw new Error(`Invalid onboarding step: ${step}`);
       }
       
-      message.success('Progress saved! 💾');
+      // Only show the success message for steps other than Avatar
+      if (step !== OnboardingStep.AVATAR) {
+        message.success('Progress saved! 💾');
+      }
       
       // Refresh user data to get the updated onboarding state
       await refreshUser();
@@ -247,27 +265,86 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   };
 
+  // Force navigation to a specific step regardless of context state
+  const forceStepNavigation = (step: OnboardingStep) => {
+    // First try React Router navigation
+    const stepPath = getStepPath(step);
+    navigate(stepPath, { replace: true });
+    
+    // Set a backup method in case React Router doesn't work
+    setTimeout(() => {
+      if (window.location.pathname !== stepPath) {
+        // Force a hard browser navigation
+        window.location.href = stepPath;
+      }
+    }, 500);
+  };
+
   // Complete the current step and move to the next one
   const completeStep = async (step: OnboardingStep, data: StepData) => {
     try {
       setIsLoading(true);
       
-      // Save data for the current step
-      await saveStepData(step, data);
+      // Handle empty avatar step specially - always proceed without trying to save
+      const isEmptyAvatarStep = step === OnboardingStep.AVATAR && 
+                               (!data.avatarUrl || data.avatarUrl === '') && 
+                               (!data.coverImageUrl || data.coverImageUrl === '');
       
-      // Move to the next step in sequence
+      // Special case for avatar step - always navigate to next step after attempt
+      const isAvatarStep = step === OnboardingStep.AVATAR;
+      
+      // Only save data if we're not in the empty avatar case
+      if (!isEmptyAvatarStep) {
+        // Save data for the current step based on what's provided
+        // Only attempt to save if we have valid data to save
+        if (
+          (step === OnboardingStep.USERNAME && data.username) ||
+          (step === OnboardingStep.PROFILE && data.displayName) ||
+          (step === OnboardingStep.AVATAR && (data.avatarUrl || data.coverImageUrl)) ||
+          (step === OnboardingStep.CUSTOMIZE && (data.tipAmounts || data.additionalSettings))
+        ) {
+          await saveStepData(step, data);
+        } else if (step !== OnboardingStep.AVATAR) {
+          // If we don't have data and it's not the avatar step, log what we got for debugging
+          console.log(`No valid data to save for step ${step}`, data);
+        }
+      }
+      
+      // No need to refresh user data if we're skipping the save step
+      if (!isEmptyAvatarStep && !isAvatarStep) {
+        // Wait for user data to refresh to get latest step info
+        await refreshUser();
+      }
+      
+      // Check current user onboarding step after refresh
+      // Move to the next step in sequence, unless the backend has already updated it
       const nextStep = getNextStep(step);
       setCurrentStep(nextStep);
       
-      // Check if we've reached the final step - currently the CUSTOMIZE step
+      // Check if we've reached the final step
       if (step === OnboardingStep.CUSTOMIZE) {
         // Instead of automatically calling completeOnboarding, show the completion modal
         setShowCompletionModal(true);
       } else if (nextStep !== OnboardingStep.COMPLETE) {
-        navigate(getStepPath(nextStep));
+        // For avatar step, force navigation to ensure it works
+        if (isAvatarStep) {
+          forceStepNavigation(nextStep);
+        } else {
+          navigate(getStepPath(nextStep), { replace: true });
+        }
       }
+      
+      // Show success message for the completed step
+      message.success(`${STEP_INFO[step as keyof typeof STEP_INFO].title} step completed successfully! 🎉`);
     } catch (error) {
+      // For avatar step, always navigate even on error
+      if (step === OnboardingStep.AVATAR) {
+        const nextStep = getNextStep(step);
+        forceStepNavigation(nextStep);
+      }
+      
       // Error already handled in saveStepData
+      console.error("Error completing step:", error);
     } finally {
       setIsLoading(false);
     }
@@ -327,7 +404,7 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setCurrentStep(prevStep);
       
       // Update URL to match the new step
-      navigate(getStepPath(prevStep));
+      navigate(getStepPath(prevStep), { replace: true });
       message.info('Going back to previous step 👈');
     } catch (error: any) {
       message.error(error?.response?.data?.message || 'Failed to navigate to previous step 😔');

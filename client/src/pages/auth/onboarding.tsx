@@ -11,6 +11,8 @@ import { AvatarStep } from '@/components/onboarding/AvatarStep';
 import { CustomizeStep } from '@/components/onboarding/CustomizeStep';
 import { useUser } from '@/contexts/UserContext';
 import { useOnboarding, OnboardingStep, STEP_INFO, getStepPath } from '@/contexts/OnboardingContext';
+import { privateApi } from '@/lib/api';
+import { message } from 'antd';
 
 export function Onboarding() {
   const { user } = useUser();
@@ -39,7 +41,7 @@ export function Onboarding() {
     bannerImage: user?.coverImageUrl || '',
     
     // Customize step
-    tipAmounts: user?.tipAmounts || [1, 3, 5],
+    defaultTipAmounts: [1, 3, 5],
     allowCustomAmounts: true,
     receiveNotes: true,
     minimumTipAmount: 1,
@@ -84,10 +86,11 @@ export function Onboarding() {
 
   // Determine step info for current UI state
   const getStepInfo = () => {
+    const currentStepKey = currentStep as keyof typeof STEP_INFO;
     return {
       id: currentStep,
-      title: STEP_INFO[currentStep]?.title || '',
-      emoji: STEP_INFO[currentStep]?.emoji || '✨'
+      title: STEP_INFO[currentStepKey]?.title || '',
+      emoji: STEP_INFO[currentStepKey]?.emoji || '✨'
     };
   };
 
@@ -145,61 +148,104 @@ function OnboardingStepRenderer({
   const { currentStep, isLoading, completeStep, goToPreviousStep } = useOnboarding();
   const [isStepValid, setIsStepValid] = React.useState(false);
   const [hasProfileBeenEdited, setHasProfileBeenEdited] = React.useState(false);
+  const navigate = useNavigate();
   
   // Handle next step action
   const handleNextStep = async () => {
-    // Save the current step data to the server based on the current step
-    switch(currentStep) {
-      case OnboardingStep.USERNAME:
-        await completeStep(currentStep, {
-          username: stepData.username
-        });
-        // Reset the profile edited flag when moving to profile step
-        setHasProfileBeenEdited(false);
-        break;
-      case OnboardingStep.PROFILE:
-        await completeStep(currentStep, {
-          displayName: stepData.displayName,
-          bio: stepData.bio,
-        });
-        break;
-      case OnboardingStep.AVATAR:
-        await completeStep(currentStep, {
-          avatarUrl: stepData.profileImage,
-          coverImageUrl: stepData.bannerImage
-        });
-        break;
-      case OnboardingStep.CUSTOMIZE:
-        await completeStep(currentStep, {
-          // Send the full customization object that contains all visual and functional options
-          customization: stepData.customization,
-          // Also include these legacy fields for backward compatibility
-          tipAmounts: stepData.customization.tipAmounts || stepData.tipAmounts,
-          theme: stepData.customization.primaryColor || stepData.themeColor,
-          additionalSettings: {
-            allowCustomAmounts: stepData.customization.allowCustomAmounts !== undefined 
-              ? stepData.customization.allowCustomAmounts 
-              : stepData.allowCustomAmounts,
-            receiveNotes: stepData.customization.receiveNotes !== undefined 
-              ? stepData.customization.receiveNotes 
-              : stepData.receiveNotes,
-            minimumTipAmount: stepData.customization.minimumTipAmount || stepData.minimumTipAmount,
-            // Add the additional customization options
-            backgroundColor: stepData.customization.backgroundColor,
-            fontFamily: stepData.customization.fontFamily,
-            buttonStyle: stepData.customization.buttonStyle,
-            showTipCounter: stepData.customization.showTipCounter,
-            enableCustomMessage: stepData.customization.enableCustomMessage,
-            defaultTipOption: stepData.customization.defaultTipOption
+    try {
+      // Save the current step data to the server based on the current step
+      switch(currentStep) {
+        case OnboardingStep.USERNAME:
+          await completeStep(currentStep, {
+            username: stepData.username
+          });
+          // Reset the profile edited flag when moving to profile step
+          setHasProfileBeenEdited(false);
+          break;
+        case OnboardingStep.PROFILE:
+          await completeStep(currentStep, {
+            displayName: stepData.displayName,
+            bio: stepData.bio,
+          });
+          break;
+        case OnboardingStep.AVATAR:
+          // Make a direct API call without validation since avatar is optional
+          try {
+            // Only pass data if not empty
+            const avatarData: any = {};
+            if (stepData.profileImage) avatarData.avatarUrl = stepData.profileImage;
+            if (stepData.bannerImage) avatarData.coverImageUrl = stepData.bannerImage;
+            
+            const response = await privateApi.post('/auth/onboarding/avatar', avatarData);
+            console.log('Avatar step completed', response.data);
+            
+            // Always navigate to customization step after avatar
+            navigate(`/onboarding/${OnboardingStep.CUSTOMIZE}`, { replace: true });
+          } catch (error) {
+            console.error('Error saving avatar data:', error);
+            // Still navigate to next step even if saving fails
+            navigate(`/onboarding/${OnboardingStep.CUSTOMIZE}`, { replace: true });
           }
-        });
-        break;
+          break;
+        case OnboardingStep.CUSTOMIZE:
+          const customizationData = {
+            ...stepData.customization,
+            tipOptions: stepData.customization.tipOptions || 
+              stepData.defaultTipAmounts.map((amount: number, index: number) => ({
+                amount,
+                isDefault: index === 0
+              }))
+          };
+          
+          console.log('Customization data before sending:', customizationData);
+          
+          // Send customization data directly to the API, not nested under additionalSettings
+          try {
+            // Send direct API call to ensure proper data format
+            const response = await privateApi.post('/auth/onboarding/customization', customizationData);
+            console.log('Customization response:', response.data);
+            
+            // Proceed with context step completion
+            await completeStep(currentStep, {
+              customization: customizationData
+            });
+          } catch (error) {
+            console.error('Error saving customization:', error);
+            message.error('There was a problem saving your customization settings');
+          }
+          break;
+      }
+    } catch (error) {
+      console.error("Error handling next step:", error);
     }
   };
   
   // Handle step skipping
   const handleSkipStep = () => {
-    goToPreviousStep(currentStep);
+    // Get the previous step index
+    const prevStepIndex = stepComponentIndex > 0 ? stepComponentIndex - 1 : 0;
+    
+    // Map step index back to the enum value
+    let prevStep;
+    switch(prevStepIndex) {
+      case 0:
+        prevStep = OnboardingStep.USERNAME;
+        break;
+      case 1:
+        prevStep = OnboardingStep.PROFILE;
+        break;
+      case 2:
+        prevStep = OnboardingStep.AVATAR;
+        break;
+      case 3:
+        prevStep = OnboardingStep.CUSTOMIZE;
+        break;
+      default:
+        prevStep = OnboardingStep.USERNAME;
+    }
+    
+    // Directly navigate to the previous step
+    navigate(getStepPath(prevStep), { replace: true });
   };
   
   // Validate step based on step type
@@ -219,11 +265,16 @@ function OnboardingStepRenderer({
       case OnboardingStep.PROFILE:
         // Check if display name is valid, regardless of whether it's been edited or pre-filled
         const hasValidDisplayName = stepData.displayName.trim().length >= 2;
-        // If the display name is valid, the step should be valid
-        setIsStepValid(hasValidDisplayName);
+        
+        // Only validate as true if the display name is valid AND either:
+        // 1. The profile has been explicitly edited by the user, or
+        // 2. The display name was already pre-filled from the server (user set it previously)
+        const wasPreFilled = user?.displayName && user.displayName === stepData.displayName ? true : false;
+        
+        setIsStepValid(hasValidDisplayName && (hasProfileBeenEdited || wasPreFilled));
         break;
       case OnboardingStep.AVATAR:
-        // Avatar is optional, always valid
+        // Avatar is completely optional, always set as valid
         setIsStepValid(true);
         break;
       case OnboardingStep.CUSTOMIZE:
@@ -286,13 +337,13 @@ function OnboardingStepRenderer({
               bio={stepData.bio}
               onDisplayNameChange={(displayName) => {
                 handleProfileFieldsUpdate('displayName', displayName);
-                setHasProfileBeenEdited(true);
               }}
               onBioChange={(bio) => {
                 handleProfileFieldsUpdate('bio', bio);
-                setHasProfileBeenEdited(true);
               }}
-              onNext={handleNextStep}
+              onNext={() => {
+                handleNextStep();
+              }}
               onPrevious={handleSkipStep}
             />
           )}
@@ -310,7 +361,41 @@ function OnboardingStepRenderer({
               }}
               username={stepData.username}
               displayName={stepData.displayName}
-              onNext={handleNextStep}
+              onNext={async () => {
+                try {
+                  // Save avatar data (or empty data) first
+                  const avatarData: any = {};
+                  if (stepData.profileImage) avatarData.avatarUrl = stepData.profileImage;
+                  if (stepData.bannerImage) avatarData.coverImageUrl = stepData.bannerImage;
+                  
+                  setIsStepValid(false); // Disable buttons during processing
+                  
+                  // Make the API call
+                  await privateApi.post('/auth/onboarding/avatar', avatarData);
+                  message.success('Moving to customization step...', 1);
+                  
+                  // Force navigation to the next step
+                  setTimeout(() => {
+                    // First update the currentStep in context
+                    navigate(`/onboarding/${OnboardingStep.CUSTOMIZE}`, { replace: true });
+                    
+                    // If still on the same page after 500ms, force a refresh
+                    setTimeout(() => {
+                      if (window.location.pathname.includes('/avatar')) {
+                        window.location.href = `/onboarding/${OnboardingStep.CUSTOMIZE}`;
+                      }
+                    }, 500);
+                  }, 100);
+                } catch (error) {
+                  console.error('Error saving avatar:', error);
+                  message.error('Had trouble saving avatar, but continuing anyway');
+                  
+                  // Still navigate even on error
+                  setTimeout(() => {
+                    navigate(`/onboarding/${OnboardingStep.CUSTOMIZE}`, { replace: true });
+                  }, 100);
+                }
+              }}
               onPrevious={handleSkipStep}
             />
           )}
@@ -322,7 +407,6 @@ function OnboardingStepRenderer({
               onCustomizationChange={(customization) => {
                 updateMultipleFields({
                   customization,
-                  tipAmounts: customization.tipAmounts || [],
                   themeColor: customization.primaryColor || '#7B2CBF'
                 });
               }}
