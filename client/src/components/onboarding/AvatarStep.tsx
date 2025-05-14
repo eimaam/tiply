@@ -29,8 +29,6 @@ export function AvatarStep({
   const profileFileInputRef = React.useRef<HTMLInputElement>(null)
   const bannerFileInputRef = React.useRef<HTMLInputElement>(null)
   
-  const canContinue = profileImage && !profilePreviewError;
-  
   const handleProfileImageUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const url = e.target.value
     setProfilePreviewError(false)
@@ -96,6 +94,34 @@ export function AvatarStep({
           title="Add Your Avatar & Banner ✨" 
           subtitle="Upload profile images that represent you to your supporters" 
         />
+        <p className="mt-2 text-sm text-brand-muted-foreground text-center">
+          This step is optional. You can continue without adding images now and add them later.
+        </p>
+        <div className="mt-4 flex justify-center">
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              // Clear any previously set images
+              onProfileImageChange('');
+              onBannerImageChange('');
+              
+              // Create a hard timeout to force navigation if the callback doesn't work
+              const forcedNavigationTimeout = setTimeout(() => {
+                window.location.href = `/onboarding/customize`;
+              }, 800);
+              
+              try {
+                onNext();
+                clearTimeout(forcedNavigationTimeout);
+              } catch (error) {
+                console.error("Error navigating from skip button:", error);
+              }
+            }}
+            className="text-brand-primary border-brand-primary"
+          >
+            Skip this step
+          </Button>
+        </div>
       </div>
       
       <div className="space-y-6">
@@ -150,6 +176,8 @@ export function AvatarStep({
                 accept="image/*"
                 onChange={handleProfileFileChange}
                 className="hidden"
+                title="Upload profile image"
+                aria-label="Upload profile image file"
               />
               <Button
                 htmlType="button"
@@ -229,6 +257,8 @@ export function AvatarStep({
                 accept="image/*"
                 onChange={handleBannerFileChange}
                 className="hidden"
+                title="Upload banner image"
+                aria-label="Upload banner image file"
               />
               <Button
                 htmlType="button"

@@ -156,27 +156,36 @@ export function CustomizeStep({
 
   // Handle next button click - complete the step
   const handleNext = async () => {
-    // Create the step data structure from our customization values
-    const stepData = {
-      tipAmounts: selectedTipAmounts,
-      theme: primaryColor, // Store primary color as theme
-      additionalSettings: {
-        backgroundColor,
-        fontFamily,
-        buttonStyle,
-        showTipCounter,
-        enableCustomMessage,
-        minimumTipAmount,
-        allowCustomAmounts,
-        receiveNotes,
-        defaultTip
-      }
+    // Create a complete customization object with all settings
+    // IMPORTANT: Explicitly set all boolean properties to ensure they're properly saved
+    // even when turned off (false values)
+    const completeCustomization: CustomizationData = {
+      primaryColor: primaryColor || '#a78bfa',
+      backgroundColor: backgroundColor || '#ffffff',
+      fontFamily: fontFamily || 'Inter',
+      buttonStyle: buttonStyle || 'rounded',
+      // Explicitly set boolean properties
+      showTipCounter: showTipCounter,
+      enableCustomMessage: enableCustomMessage,
+      allowCustomAmounts: allowCustomAmounts,
+      receiveNotes: receiveNotes,
+      // Other properties
+      tipOptions: tipOptions.length > 0 ? tipOptions : [
+        { amount: 1, isDefault: false },
+        { amount: 5, isDefault: true },
+        { amount: 10, isDefault: false }
+      ],
+      minimumTipAmount: minimumTipAmount || 1
     };
 
-    // Call the completeStep function from context
-    await completeStep(OnboardingStep.CUSTOMIZE, stepData);
+    console.log('Saving customization data:', completeCustomization);
+
+    // Call the completeStep function from context with the full customization data
+    await completeStep(OnboardingStep.CUSTOMIZE, {
+      customization: completeCustomization
+    });
     
-    // Also call the onNext prop if provided
+    
     if (onNext) {
       onNext();
     }
@@ -211,6 +220,8 @@ export function CustomizeStep({
               value={primaryColor}
               onChange={(e) => handleChange('primaryColor', e.target.value)}
               className="h-10 w-10 rounded border-none"
+              title="Select primary color"
+              aria-label="Select primary color"
             />
             <Input
               type="text"
@@ -230,6 +241,8 @@ export function CustomizeStep({
               value={backgroundColor}
               onChange={(e) => handleChange('backgroundColor', e.target.value)}
               className="h-10 w-10 rounded border-none"
+              title="Select background color"
+              aria-label="Select background color"
             />
             <Input
               type="text"

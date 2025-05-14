@@ -24,25 +24,32 @@ export function ProfileStep({
 }: ProfileStepProps) {
   // Track if the form has been interacted with
   const [hasInteracted, setHasInteracted] = React.useState(false);
+  const [displayNameValue, setDisplayNameValue] = React.useState(displayName || '');
+  const [bioValue, setBioValue] = React.useState(bio || '');
   
   // Initialize the component with pre-filled values if they exist
   React.useEffect(() => {
     if (displayName?.trim() || bio?.trim()) {
       setHasInteracted(true);
     }
-  }, []);
+    // Set initial values
+    setDisplayNameValue(displayName || '');
+    setBioValue(bio || '');
+  }, [displayName, bio]);
 
   // Check if we can continue to next step - only display name is required
-  const canContinue = displayName.trim().length >= 2 && hasInteracted;
+  const canContinue = displayNameValue.trim().length >= 2 && hasInteracted;
 
   const handleDisplayNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    setDisplayNameValue(value);
     setHasInteracted(true);
     onDisplayNameChange(value);
   };
 
   const handleBioChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
+    setBioValue(value);
     setHasInteracted(true);
     if (value.length <= 140) {
       onBioChange(value);
@@ -68,13 +75,13 @@ export function ProfileStep({
           <Input 
             name="displayName"
             placeholder="Your name or brand"
-            value={displayName}
+            value={displayNameValue}
             onChange={handleDisplayNameChange}
             required
-            className={!displayName.trim() ? 'border-red-500' : ''}
+            className={displayNameValue.trim().length < 2 ? 'border-red-500' : ''}
             autoFocus
           />
-          {displayName.trim().length > 0 && displayName.trim().length < 2 && (
+          {(hasInteracted && displayNameValue.trim().length < 2) && (
             <p className="text-sm text-red-500">Display name must be at least 2 characters</p>
           )}
           <div className="flex items-start space-x-2 text-sm text-brand-muted-foreground">
@@ -92,7 +99,7 @@ export function ProfileStep({
           <Textarea 
             name="bio"
             placeholder="Tell others about yourself, your work, or your interests..."
-            value={bio}
+            value={bioValue}
             onChange={handleBioChange}
             rows={4}
             className="resize-none"
@@ -102,7 +109,7 @@ export function ProfileStep({
               <InfoCircleOutlined className="text-brand-primary mt-0.5" />
               <span>A brief description about yourself that appears on your profile.</span>
             </div>
-            <span>{bio.length}/140</span>
+            <span>{bioValue.length}/140</span>
           </div>
         </div>
         

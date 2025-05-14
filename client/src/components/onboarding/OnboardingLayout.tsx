@@ -114,7 +114,7 @@ export function OnboardingLayout({
               <Button
                 variant="outline"
                 onClick={onPrevious}
-                disabled={isLoading || currentStep === 1}
+                disabled={isLoading || currentStep === 0}
                 className={`${currentStep === 0 ? 'opacity-0 pointer-events-none' : ''}`}
               >
                 <ArrowLeftOutlined className="mr-2" />
