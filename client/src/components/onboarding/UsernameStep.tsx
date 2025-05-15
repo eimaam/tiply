@@ -77,6 +77,23 @@ export function UsernameStep({
     [isValidFormat, onUsernameChange]
   );
   
+  // Check for reserved username in localStorage when component mounts
+  React.useEffect(() => {
+    const reservedUsername = localStorage.getItem('reservedUsername');
+    if (reservedUsername && !username) {
+      // Validate and check availability of the reserved username
+      const isValidFormat = /^[a-z0-9_]{3,20}$/.test(reservedUsername);
+      if (isValidFormat) {
+        // Update the username in parent component
+        onUsernameChange(reservedUsername, true, false);
+        // Check availability
+        debouncedCheckUsername(reservedUsername);
+      }
+      // Remove the reserved username from localStorage after using it
+      localStorage.removeItem('reservedUsername');
+    }
+  }, [debouncedCheckUsername, username, onUsernameChange]);
+  
   // Check if we can continue to next step
   const canContinue = username && isValidFormat && isAvailable === true && !isChecking;
   

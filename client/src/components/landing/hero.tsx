@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { motion } from 'framer-motion'
@@ -7,6 +7,8 @@ import { smoothScrollTo } from '@/lib/utils'
 import PoweredBySolanaIllustration from '@/assets/images/illustrations/powered-by-solana'
 import { CheckCircleFilled, CloseCircleFilled, LoadingOutlined, ArrowRightOutlined } from '@ant-design/icons'
 import debounce from 'lodash.debounce'
+import { message } from 'antd'
+import { publicApi } from '@/lib/api'
 
 const container = {
   hidden: { opacity: 0 },
@@ -24,6 +26,8 @@ const item = {
 }
 
 export function Hero() {
+  const navigate = useNavigate();
+  
   // Function to handle smooth scrolling to the How It Works section
   const scrollToHowItWorks = () => {
     smoothScrollTo('how-it-works');
@@ -32,31 +36,54 @@ export function Hero() {
   const [username, setUsername] = React.useState('');
   const [isAvailable, setIsAvailable] = React.useState<boolean | null>(null);
   const [isChecking, setIsChecking] = React.useState(false);
+  const [claimInProgress, setClaimInProgress] = React.useState(false);
+  
+  const usernameRegex = /^[a-z0-9_]+$/;
+
+  // Check if username is valid
+  const isValidUsername = (username: string) => {
+    if (!username || username.length < 3) return false;
+    return usernameRegex.test(username);
+  };
 
   // Debounce username availability check
   const checkUsernameAvailability = React.useCallback(
     debounce(async (username: string) => {
-      if (!username || username.length < 3) {
+      if (!isValidUsername(username)) {
         setIsAvailable(null);
         return;
       }
       
       setIsChecking(true);
       try {
-        // Simulate API call to check username availability
-        await new Promise(resolve => setTimeout(resolve, 600));
-        // For demo purposes, consider usernames containing "taken" as unavailable
-        const available = !username.toLowerCase().includes('taken');
-        setIsAvailable(available);
-      } catch (error) {
+        // Make real API call to check username availability
+        const response = await publicApi.get(`/auth/check-username/${username}`);
+        setIsAvailable(response.data?.data?.available ?? false);
+      } catch (error: any) {
         console.error('Error checking username availability:', error);
-        setIsAvailable(null);
+        // If the error is 409 Conflict, username is taken
+        if (error.response?.status === 409) {
+          setIsAvailable(false);
+        } else {
+          // For other errors, reset the check
+          setIsAvailable(null);
+          message.error('Could not check username availability');
+        }
       } finally {
         setIsChecking(false);
       }
     }, 500),
     []
   );
+
+  // Handle username input change
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.trim().toLowerCase();
+    // Only allow a-z, 0-9, and underscore
+    if (value === '' || usernameRegex.test(value)) {
+      setUsername(value);
+    }
+  };
 
   // Check username availability when the input changes
   React.useEffect(() => {
@@ -66,6 +93,22 @@ export function Hero() {
       setIsAvailable(null);
     }
   }, [username, checkUsernameAvailability]);
+
+  // Handle claim button click
+  const handleClaim = () => {
+    if (!isAvailable || !username || isChecking) return;
+    
+    setClaimInProgress(true);
+    
+    // Store the reserved username in localStorage for the onboarding flow
+    localStorage.setItem('reservedUsername', username);
+    
+    // Navigate to signup page
+    navigate('/signup');
+    
+    // Show success message
+    message.success(`Username @${username} has been reserved for you! Sign up to claim!`);
+  };
 
   return (
     <div className="relative overflow-hidden">
@@ -135,10 +178,11 @@ export function Hero() {
                       <Input
                         type="text"
                         value={username}
-                        onChange={(e) => setUsername(e.target.value.trim().toLowerCase())}
+                        onChange={handleUsernameChange}
                         className="pl-[5.5rem] w-full h-12 bg-brand-surface/50 dark:bg-brand-muted/10 border-brand-border dark:border-brand-muted/20 focus:border-brand-primary focus:ring-1 focus:ring-brand-primary rounded-xl transition-all"
                         placeholder="yourusername"
                         autoComplete="off"
+                        maxLength={20}
                       />
                       <div className="absolute inset-y-0 right-0 flex items-center pr-4">
                         {isChecking && <LoadingOutlined className="text-brand-muted-foreground animate-spin" />}
@@ -148,13 +192,14 @@ export function Hero() {
                     </div>
                     <Button 
                       className="h-12 px-6 bg-brand-primary hover:bg-brand-primary/90 text-white rounded-xl flex items-center justify-center shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-70 disabled:pointer-events-none"
-                      disabled={!isAvailable || !username || isChecking}
-                      onClick={() => {
-                        // Navigate to signup with the username pre-filled
-                        window.location.href = `/signup?username=${username}`;
-                      }}
+                      disabled={!isAvailable || !username || isChecking || claimInProgress}
+                      onClick={handleClaim}
                     >
-                      <span className="mr-1 font-medium">Claim</span> <ArrowRightOutlined />
+                      <span className="mr-1 font-medium">
+                        {claimInProgress ? 'Claiming...' : 'Claim'}
+                      </span>
+                      {!claimInProgress && <ArrowRightOutlined />}
+                      {claimInProgress && <LoadingOutlined />}
                     </Button>
                   </div>
                   
@@ -179,9 +224,19 @@ export function Hero() {
                       </motion.p>
                     )}
                     
+                    {username && !isValidUsername(username) && (
+                      <motion.p 
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-sm text-amber-500"
+                      >
+                        Username must be at least 3 characters (letters, numbers, underscores only).
+                      </motion.p>
+                    )}
+                    
                     {!username && (
                       <p className="text-xs text-brand-muted-foreground">
-                        Choose a username with at least 3 characters.
+                        Choose a username with at least 3 characters (a-z, 0-9, _).
                       </p>
                     )}
                   </div>
@@ -189,7 +244,7 @@ export function Hero() {
                 
                 {/* Example usernames */}
                 <div className="mt-5 pt-5 border-t border-brand-border/30 flex flex-wrap gap-2 justify-center">
-                  <p className="w-full text-xs text-brand-muted-foreground text-center mb-2">Popular usernames:</p>
+                  <p className="w-full text-xs text-brand-muted-foreground text-center mb-2">Try these:</p>
                   {['artist', 'creator', 'musician', 'streamer', 'coach'].map(suggestion => (
                     <button
                       key={suggestion}
