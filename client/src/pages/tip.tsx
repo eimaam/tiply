@@ -487,21 +487,57 @@ const TipPage = ({ className }: TipPageProps) => {
         setWalletAddress(publicKey.toString());
         
         // Submit tip to backend
-        const { data: tipData } = await publicApi.post('/tips/submit', {
-          txSignature: signature,
-          amount: tipAmount,
-          recipientUsername: username,
-          message: note,
-          tipperWallet: publicKey.toString(),
-          recipientWallet: recipientPublicKey.toString(),
-        });
-
-        if (tipData.success) {
+        
+        setCurrentStep(2); // Update the step to show that transaction is being processed
+        
+        // Give the blockchain a moment to finalize the transaction
+        await new Promise(resolve => setTimeout(resolve, 3000)); // Increased wait time to 3 seconds
+        
+        let retryCount = 0;
+        const maxRetries = 5; // Increased max retries
+        let tipData = null;
+        
+        while (retryCount < maxRetries) {
+          try {
+            message.loading(`Submitting tip (attempt ${retryCount + 1}/${maxRetries})...`);
+            const response = await publicApi.post('/tips/submit', {
+              txSignature: signature,
+              amount: tipAmount,
+              recipientUsername: username,
+              message: note,
+              tipperWallet: publicKey.toString(),
+              recipientWallet: recipientPublicKey.toString(),
+            });
+            
+            tipData = response.data;
+            console.log('Tip submission response:', tipData);
+            break; // Success, exit the retry loop
+          } catch (apiError: any) {
+            console.error(`Tip submission attempt ${retryCount + 1} failed:`, apiError);
+            
+            // Check if this is a "transaction not found" error, which might resolve with a retry
+            const isTransactionNotFoundError = 
+              apiError.response?.data?.message?.includes('Transaction not found') ||
+              apiError.response?.data?.message?.includes('still be processing');
+            
+            if (isTransactionNotFoundError && retryCount < maxRetries - 1) {
+              console.log(`Transaction may still be confirming, retrying in ${(retryCount + 1) * 2} seconds (attempt ${retryCount + 1}/${maxRetries})...`);
+              retryCount++;
+              // Wait with increasing time between retries (2s, 4s, 6s, 8s)
+              await new Promise(resolve => setTimeout(resolve, (retryCount + 1) * 2000));
+            } else {
+              // Either it's not a retryable error or we've hit the max retries
+              throw apiError;
+            }
+          }
+        }
+        
+        if (tipData?.success) {
           setTipSuccess(true);
           setCurrentStep(3);
           setTimeout(triggerConfetti, 300);
         } else {
-          throw new Error(tipData.message || 'Backend failed to process the tip');
+          throw new Error(tipData?.message || 'Backend failed to process the tip');
         }
       } catch (sendError: any) {
         console.error('Send transaction error:', sendError);
@@ -695,7 +731,7 @@ const TipPage = ({ className }: TipPageProps) => {
   // Render the main tipping UI
   return (
     <div 
-      className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200"
+      className="min-h-screen  text-gray-800 dark:text-gray-200"
       style={{ fontFamily: customStyles.fontFamily }}
     >
       {renderAirdropModal()}

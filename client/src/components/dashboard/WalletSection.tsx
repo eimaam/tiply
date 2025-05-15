@@ -175,8 +175,8 @@ export const WalletSection: React.FC<WalletSectionProps> = ({ className }) => {
         <div className="mb-8 p-4 bg-brand-accent/10 rounded-lg border border-brand-border">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-lg font-medium flex items-center">
-              <span>Your Tiply Balance</span>
-              <Tooltip title="This is the balance of your Tiply account">
+              <span>Your <code>tiply</code> Balance</span>
+              <Tooltip title="This is the balance of your tiply account">
                 <QuestionCircleOutlined className="ml-1 text-xs text-brand-muted-foreground" />
               </Tooltip>
             </h3>
@@ -209,7 +209,7 @@ export const WalletSection: React.FC<WalletSectionProps> = ({ className }) => {
               {isLoadingBalance ? (
                 <Spin size="small" />
               ) : (
-                <>${balance?.toFixed(2) ?? '0.00'} USDC</>
+                <>${user?.balance?.toFixed(2) || balance?.toFixed(2) } USDC</>
               )}
             </h4>
             <Button 
@@ -226,7 +226,8 @@ export const WalletSection: React.FC<WalletSectionProps> = ({ className }) => {
           </div>
         </div>
 
-        <div className="mb-8">
+{/* TODO - info: the biz model or architecture of the project currently doesn't allow for publicly handling the address */}
+        {/* <div className="mb-8">
           <h3 className="text-lg font-medium mb-2">Your Tip Address</h3>
           <p className="text-sm text-brand-muted-foreground mb-4">
             This is your unique Tiply address where you receive tips. Share this with your supporters!
@@ -275,7 +276,7 @@ export const WalletSection: React.FC<WalletSectionProps> = ({ className }) => {
               Copy Tip Link
             </Button>
           </div>
-        </div>
+        </div> */}
 
         <Form
           form={form}
