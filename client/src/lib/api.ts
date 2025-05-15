@@ -87,8 +87,18 @@ const responseInterceptor = (response: AxiosResponse) => {
 
 const errorInterceptor = async (error: AxiosError) => {
   const { response, config } = error;
-console.log({ response })
-console.log({ isRefreshing})
+  console.log({ response })
+  console.log({ isRefreshing})
+
+  // Log more details when we get a 401 response
+  if (response?.status === 401) {
+    console.log('Received 401 error:', {
+      url: config?.url,
+      responseData: response.data,
+      withCredentials: config?.withCredentials
+    });
+  }
+  
   // Handle token expiration
   if (response?.status === 401 && 
       response.data && 
