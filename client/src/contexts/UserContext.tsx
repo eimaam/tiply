@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { message } from 'antd';
 import { User, AuthData, LoginCredentials, SignupData } from '@/lib/types/user';
@@ -6,6 +6,7 @@ import { authService } from '@/services/auth.service';
 import { privateApi } from '@/lib/api';
 import api from '@/lib/api';
 import { userService } from '@/services/user.service';
+import { publicApi } from '@/lib/api';
 
 // Define the context state type
 interface UserContextType {
@@ -39,7 +40,81 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [authChecked, setAuthChecked] = useState(false);
+  const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
+
+  // Function to refresh the access token
+  const refreshAccessToken = async () => {
+    try {
+      console.log('🔄 Refreshing access token...');
+      
+      // Directly use the API client to make the refresh token request
+      // This gives us more control and visibility into the request/response
+      const response = await publicApi.post('/auth/refresh', {}, { 
+        withCredentials: true,
+        // Add specific headers to help diagnose
+        headers: {
+          'X-Debug-Refresh': 'true'
+        }
+      });
+      
+      console.log('✅ Token refresh response:', response);
+      
+      if (response && response.data && response.data.success) {
+        console.log('✅ Token refreshed successfully');
+        return true;
+      } else {
+        console.error('❌ Token refresh failed - unexpected response:', response);
+        return false;
+      }
+    } catch (error: any) {
+      // More detailed error logging
+      console.error('❌ Failed to refresh token. Error details:', error);
+      
+      if (error.response) {
+        console.error('Response status:', error.response.status);
+        console.error('Response data:', error.response.data);
+        console.error('Response headers:', error.response.headers);
+      } else if (error.request) {
+        console.error('No response received. Request:', error.request);
+      } else {
+        console.error('Error message:', error.message);
+      }
+      
+      // Don't logout automatically on refresh failure
+      return false;
+    }
+  };
+
+  // Schedule token refresh
+  const scheduleTokenRefresh = () => {
+    // Clear any existing timer
+    if (refreshTimerRef.current) {
+      clearTimeout(refreshTimerRef.current);
+    }
+
+    // Set timer to refresh token after 25 minutes (5 minutes before 30-minute expiry)
+    const REFRESH_TIME = 25 * 60 * 1000; // 25 minutes
+    console.log('⏰ Scheduling token refresh in 25 minutes');
+    
+    refreshTimerRef.current = setTimeout(() => {
+      refreshAccessToken().then(success => {
+        if (success) {
+          // If successfully refreshed, schedule the next refresh
+          scheduleTokenRefresh();
+        }
+      });
+    }, REFRESH_TIME);
+  };
+
+  // Clear the refresh timer when component unmounts
+  useEffect(() => {
+    return () => {
+      if (refreshTimerRef.current) {
+        clearTimeout(refreshTimerRef.current);
+      }
+    };
+  }, []);
 
   // Check if the user is authenticated on mount - uses cookies automatically
   useEffect(() => {
@@ -47,6 +122,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const response = await refreshUser();
         console.log('User authenticated:', response);
+        // Schedule token refresh if user is authenticated
+        if (response) {
+          scheduleTokenRefresh();
+        }
       } catch (error) {
         // Handle silently - user isn't authenticated
         console.log('User not authenticated or session expired', error);
@@ -69,6 +148,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('Login response:', authData);
       // Update user state
       setUser(authData.user);
+      
+      // Schedule token refresh
+      scheduleTokenRefresh();
       
       // Check if onboarding is needed
       if (!authData.user.onboardingCompleted) {
@@ -99,6 +181,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Update user state
       setUser(authData.user);
       
+      // Schedule token refresh
+      scheduleTokenRefresh();
+      
       message.success('Account created successfully! 🎉 Let\'s set up your profile.');
       navigate('/onboarding/step-1');
       
@@ -119,6 +204,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try {
       setIsLoading(true);
+      // Clear the refresh timer
+      if (refreshTimerRef.current) {
+        clearTimeout(refreshTimerRef.current);
+        refreshTimerRef.current = null;
+      }
+      
       // Call logout endpoint to clear the cookie on the server
       await api.auth.logout();
       
@@ -141,14 +232,20 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setIsLoading(true);
       // Use the userService instead of direct API call
-      const updatedUser = await userService.updateProfile(userData);
+      const response = await userService.updateProfile(userData);
       
-      if (updatedUser) {
+      // The response structure is { data: User }
+      if (response && response.data) {
+        const updatedUser = response.data;
+        
         // Merge the updated data with existing user data
-        setUser(prevUser => ({
-          ...prevUser,
-          ...updatedUser
-        }));
+        setUser(prevUser => {
+          if (!prevUser) return updatedUser;
+          return {
+            ...prevUser,
+            ...updatedUser
+          };
+        });
         
         message.success('Profile updated successfully! ✨');
         return updatedUser;

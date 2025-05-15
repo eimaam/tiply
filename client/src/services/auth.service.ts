@@ -40,7 +40,9 @@ export const authService = {
   /**
    * Refresh access token using refresh token
    */
-  refreshToken: () => publicApi.post("/auth/refresh"),
+  refreshToken: () => publicApi.post("/auth/refresh", {}, { 
+    withCredentials: true 
+  }),
 
   /**
    * Get current authenticated user

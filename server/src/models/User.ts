@@ -241,10 +241,11 @@ const UserSchema = new Schema<IUser>(
       type: Boolean,
       default: false,
     },
-    circleWalletId: { type: String, default: null },
+    circleWalletId: { type: String, unique: true, default: null },
     depositWalletAddress: {
       type: String,
       trim: true,
+      unique: true,
     },
     withdrawalWalletAddress: {
       type: String,

@@ -127,7 +127,8 @@ export class AuthController {
       const cookieOptions = {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict' as 'strict'
+        sameSite: 'strict' as 'strict',
+        path: '/'
       };
       
       // Access token cookie - shorter expiration
@@ -256,7 +257,8 @@ export class AuthController {
       const cookieOptions = {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict' as 'strict'
+        sameSite: 'strict' as 'strict',
+        path: '/'
       };
       
       // Access token cookie
@@ -296,6 +298,17 @@ export class AuthController {
    */
   static async refreshToken(req: Request, res: Response) {
     try {
+      // Log the incoming request details
+      console.log('🔍 Refresh token request received with cookies:', {
+        hasCookies: !!req.cookies,
+        refreshTokenCookie: req.cookies.refreshToken ? 'present' : 'missing',
+        allCookieNames: req.cookies ? Object.keys(req.cookies) : 'none',
+        headers: {
+          cookie: req.headers.cookie,
+          'x-debug-refresh': req.headers['x-debug-refresh']
+        }
+      });
+      
       // Get refresh token from cookie
       const refreshToken = req.cookies.refreshToken;
       
@@ -311,6 +324,7 @@ export class AuthController {
       const result = await TokenService.verifyRefreshToken(refreshToken);
       
       if (!result) {
+        console.log('❌ Invalid refresh token -  verification failed');
         // Clear the invalid refresh token cookie
         res.clearCookie('refreshToken', {
           httpOnly: true,
@@ -326,10 +340,13 @@ export class AuthController {
         });
       }
       
+      console.log('✅ Refresh token verified successfully, setting new cookies');
+      
       const cookieOptions = {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict' as 'strict'
+        sameSite: 'strict' as 'strict',
+        path: '/'
       };
       
       // Set new access token in cookie
@@ -354,6 +371,7 @@ export class AuthController {
         }
       });
     } catch (error) {
+      console.error('❌ Error refreshing token:', error);
       return handleControllerError(error, res);
     }
   }
