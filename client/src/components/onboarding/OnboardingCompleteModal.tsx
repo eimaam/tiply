@@ -6,6 +6,7 @@ import PoweredBySolanaIllustration from "@/assets/images/illustrations/powered-b
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { FC, useEffect, useState } from "react";
 import { useUser } from "@/contexts/UserContext";
+import { message } from "antd";
 
 interface OnboardingCompleteModalProps {
   username: string;
@@ -110,6 +111,7 @@ export const OnboardingCompleteModal: FC<OnboardingCompleteModalProps> = ({
             className="flex gap-2"
             onClick={() => {
               navigator.clipboard.writeText(`https://tiply.xyz/@${username}`);
+              message.info("Link copied to clipboard");
             }}
           >
             <svg

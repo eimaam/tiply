@@ -51,7 +51,12 @@ const CIRCLE_ENV = {
   isTest: NodeEnv === "development" ? true : false,
 };
 
+const SOLANA = {
+  RPC_URL: process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com',
+  USDC_MINT: process.env.USDC_MINT || '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU', // Devnet USDC mint
+}
+
 const MONGODB_URI =
   NodeEnv === "development" ? DATABASE.development : DATABASE.production;
 
-export { NodeEnv, PORT, DATABASE, MONGODB_URI, JWT, CIRCLE_ENV };
+export { NodeEnv, PORT, DATABASE, MONGODB_URI, JWT, CIRCLE_ENV, SOLANA };

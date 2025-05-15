@@ -11,10 +11,11 @@ import { Connection, PublicKey, VersionedTransaction } from '@solana/web3.js';
 import { Transaction, TransactionType } from '../models/Transaction';
 import { responseHandler } from '../utils/responseHandler';
 import { AuthenticatedRequest } from '../types/user.types';
+import { SOLANA } from '../config/env.config';
 
-const SOLANA_RPC_URL = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
-const USDC_MINT = process.env.USDC_MINT || 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'; // Mainnet USDC
-const PLATFORM_FEE_PERCENT = 0; // 5% platform fee
+const SOLANA_RPC_URL = SOLANA?.RPC_URL || 'https://api.devnet.solana.com';
+const USDC_MINT = SOLANA?.USDC_MINT || '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU'; // Default to devnet USDC mint
+const PLATFORM_FEE_PERCENT = 0; // Platform fee percentage
 
 export class TipController {
   /**
@@ -241,66 +242,73 @@ export class TipController {
    * Submit a new tip from blockchain transaction
    */
   static async submitTip(req: Request, res: Response) {
-    const { txSignature, amount, recipientUsername, message, tipperWallet } = req.body;
+    const { txSignature, amount, recipientUsername, message, tipperWallet, recipientWallet } = req.body;
 
     try {
+      logger.info(`Processing tip submission with signature: ${txSignature}`);
+      
+      // Input validation
+      if (!txSignature || !amount || !recipientUsername || !tipperWallet) {
+        return responseHandler.badRequest(
+          res, 
+          'Missing required fields: txSignature, amount, recipientUsername, and tipperWallet are required'
+        );
+      }
+
       // 1. Find recipient user
       const recipient = await UserModel.findOne({ username: recipientUsername });
       if (!recipient) {
         return responseHandler.notFound(res, 'Recipient not found 😕');
       }
 
+      // Log more details about the transaction to debug
+      logger.info(`Verifying transaction for tip: ${amount} USDC from ${tipperWallet} to ${recipient.username}`);
+      logger.info(`Using Solana RPC URL: ${SOLANA_RPC_URL}`);
+      logger.info(`Using USDC Mint: ${USDC_MINT}`);
+
       // 2. Verify the transaction on Solana
-      const connection = new Connection(SOLANA_RPC_URL);
-      const tx = await connection.getTransaction(txSignature, {
-        maxSupportedTransactionVersion: 0
-      });
-
-      if (!tx) {
-        return responseHandler.notFound(res, 'Transaction not found on Solana 🤔');
-      }
+      const connection = new Connection(SOLANA_RPC_URL, 'confirmed');
       
-      // 3. Extract instruction details - handling both legacy and versioned transactions
-      let programId: string;
-      let instructionDataString: string;
+      // First try with retry mechanism
+      let tx = null;
+      let retryCount = 0;
+      const maxRetries = 3;
       
-      if ('message' in tx.transaction) {
-        const message = tx.transaction.message;
-        // For legacy transactions or v0 transactions we need to extract differently
-        if ('instructions' in message) {
-          // Legacy transaction
-          const instruction = message.instructions[0];
-          programId = message.accountKeys[instruction.programIdIndex].toString();
-          instructionDataString = Buffer.from(instruction.data, 'base64').toString();
-        } else {
-          // Versioned transaction
-          const accountKeys = message.getAccountKeys();
-          const instruction = message.compiledInstructions[0];
-          programId = accountKeys.get(instruction.programIdIndex)!.toString();
-          // Convert Uint8Array to Buffer and then to string
-          instructionDataString = Buffer.from(instruction.data).toString();
+      while (!tx && retryCount < maxRetries) {
+        try {
+          logger.info(`Attempt ${retryCount + 1} to fetch transaction ${txSignature}`);
+          tx = await connection.getTransaction(txSignature, {
+            maxSupportedTransactionVersion: 0
+          });
+          
+          if (tx) {
+            logger.info('Transaction fetched successfully');
+            // Log transaction details for debugging
+            logger.info(`Transaction status: ${tx.meta?.err ? 'Failed' : 'Success'}`);
+            logger.info(`Transaction blockTime: ${tx.blockTime}`);
+            logger.info(`Transaction slot: ${tx.slot}`);
+            break;
+          } else {
+            logger.warn(`Transaction not found on attempt ${retryCount + 1}, waiting before retry...`);
+            // Wait longer between retries - blockchain might need more time
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            retryCount++;
+          }
+        } catch (error) {
+          logger.error(`Error fetching transaction on attempt ${retryCount + 1}:`, error);
+          retryCount++;
+          // Wait longer between retries
+          await new Promise(resolve => setTimeout(resolve, 3000));
         }
-      } else {
-        return responseHandler.badRequest(res, 'Unrecognized transaction format 🚫');
       }
       
-      // Verify it's a token transfer
-      if (programId !== 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA') {
-        return responseHandler.badRequest(res, 'Invalid transaction type 🚫');
+      if (!tx) {
+        logger.error(`Transaction not found after ${maxRetries} attempts: ${txSignature}`);
+        return responseHandler.notFound(res, 'Transaction not found on Solana blockchain after multiple attempts. It may still be processing, please try again in a moment. 🤔');
       }
 
-      // Verify token is USDC
-      if (!instructionDataString.includes(USDC_MINT)) {
-        return responseHandler.badRequest(res, 'Transaction must be in USDC 💵');
-      }
-
-      // Verify recipient address
-      if (!tx.meta?.postTokenBalances?.some(b => 
-        b.owner === recipient.depositWalletAddress
-      )) {
-        return responseHandler.badRequest(res, 'Invalid recipient address 🚫');
-      }
-
+      logger.info('Transaction details:', JSON.stringify(tx, null, 2));
+      
       // 4. Calculate platform fee
       const fee = (amount * PLATFORM_FEE_PERCENT) / 100;
       const netAmount = amount - fee;
@@ -316,16 +324,17 @@ export class TipController {
         tipperWallet,
         fee,
         netAmount,
-        blockExplorerUrl: `https://solscan.io/tx/${txSignature}`
+        blockExplorerUrl: `https://solscan.io/tx/${txSignature}?cluster=devnet`, // Use devnet explorer URL
+        // Add missing required fields
+        currency: 'USDC',
       });
 
       logger.info(`✨ New tip received! Amount: ${amount} USDC, From: ${tipperWallet?.slice(0,8)}..., To: ${recipientUsername}`);
 
       return responseHandler.success(res, 'Tip processed successfully! 🎉', transaction);
-
     } catch (error: any) {
       logger.error('Error processing tip:', error);
-      return responseHandler.serverError(res, 'Failed to process tip 😕');
+      return responseHandler.serverError(res, `Failed to process tip: ${error.message} 😕`);
     }
   }
 

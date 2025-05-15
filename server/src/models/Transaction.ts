@@ -26,12 +26,10 @@ export enum TransactionStatus {
  * Interface for Transaction document
  */
 export interface ITransaction extends Document {
-  userId: mongoose.Types.ObjectId;
   type: TransactionType;
   amount: number;
   currency: string;
   status: TransactionStatus;
-  walletAddress?: string;
   txHash?: string;
   description?: string;
   metadata?: Record<string, any>;
@@ -39,7 +37,6 @@ export interface ITransaction extends Document {
   userAgent?: string;
   createdAt: Date;
   updatedAt: Date;
-  completedAt?: Date;
   txSignature: string;
   message?: string;
   recipient: Schema.Types.ObjectId;
@@ -54,12 +51,6 @@ export interface ITransaction extends Document {
  */
 const TransactionSchema = new Schema<ITransaction>(
   {
-    userId: {
-      type: Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-      index: true,
-    },
     type: {
       type: String,
       enum: Object.values(TransactionType),
@@ -83,10 +74,7 @@ const TransactionSchema = new Schema<ITransaction>(
       default: TransactionStatus.PENDING,
       index: true,
     },
-    walletAddress: {
-      type: String,
-      trim: true,
-    },
+    
     txHash: {
       type: String,
       trim: true,
@@ -106,9 +94,7 @@ const TransactionSchema = new Schema<ITransaction>(
     userAgent: {
       type: String,
     },
-    completedAt: {
-      type: Date,
-    },
+    
     txSignature: {
       type: String,
       required: true,
