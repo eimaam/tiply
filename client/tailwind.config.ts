@@ -13,7 +13,8 @@ const config: Config = {
         lg: { min: '1310px' },
       },
       fontFamily: {
-        sans: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
+        sans: ['"Cabinet Grotesk"', 'system-ui', 'sans-serif'],
+        cabinetGrotesk: ['"Cabinet Grotesk"', 'sans-serif'],
         spaceGrotesk: ['"Space Grotesk"', 'sans-serif'],
         mono: ['IBM Plex Mono', 'monospace'],
       },

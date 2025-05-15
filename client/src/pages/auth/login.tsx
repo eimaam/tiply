@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -8,9 +8,16 @@ import { Form } from 'antd'
 import { useUser } from '@/contexts/UserContext'
 
 export function Login() {
-  const { login } = useUser()
+  const { login, user } = useUser()
+  const navigate = useNavigate()
   const [isLoading, setIsLoading] = React.useState<boolean>(false)
   const [form] = Form.useForm()
+
+  React.useEffect(() => {
+    if (user) {
+      navigate('/dashboard')
+    }
+  }, [user])
   
   // Animation variants
   const containerVariants = {
