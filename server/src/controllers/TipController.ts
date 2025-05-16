@@ -307,26 +307,51 @@ export class TipController {
         return responseHandler.notFound(res, 'Transaction not found on Solana blockchain after multiple attempts. It may still be processing, please try again in a moment. 🤔');
       }
 
-      logger.info('Transaction details:', JSON.stringify(tx, null, 2));
-      
-      // 4. Calculate platform fee
+      // Calculate platform fee
       const fee = (amount * PLATFORM_FEE_PERCENT) / 100;
       const netAmount = amount - fee;
 
+      // Validate all required fields are present
+      if (!txSignature || !amount || !recipient._id || !netAmount) {
+        logger.error('Missing required fields:', { txSignature, amount, recipientId: recipient._id, fee, netAmount });
+        return responseHandler.badRequest(res, 'Missing required transaction fields');
+      }
+
+      // Validate transaction was successful
+      if (tx.meta?.err) {
+        logger.error('Transaction failed on Solana:', tx.meta.err);
+        return responseHandler.badRequest(res, 'Transaction failed on Solana blockchain');
+      }
+
       // 5. Store the transaction
       const transaction = await Transaction.create({
-        txSignature,
-        amount,
         type: TransactionType.TIP,
+        amount,
+        currency: 'USDC',
         status: TransactionStatus.COMPLETED,
         message,
         recipient: recipient._id,
         tipperWallet,
         fee,
         netAmount,
-        blockExplorerUrl: `https://solscan.io/tx/${txSignature}?cluster=devnet`, // Use devnet explorer URL
-        // Add missing required fields
-        currency: 'USDC',
+        txSignature, // Required field
+        blockExplorerUrl: `https://solscan.io/tx/${txSignature}${SOLANA_RPC_URL.includes('devnet') ? '?cluster=devnet' : ''}`,
+        recipientWallet,
+        metadata: {
+          transactionType: 'tip',
+          solana: {
+            signature: txSignature,
+            mint: USDC_MINT,
+            network: SOLANA_RPC_URL.includes('devnet') ? 'devnet' : 'mainnet',
+            slot: tx.slot,
+            blockTime: tx.blockTime,
+            confirmationStatus: 'confirmed'
+          },
+          clientInfo: {
+            ipAddress: req.ip || req.socket.remoteAddress || '',
+            userAgent: req.headers['user-agent'] || ''
+          }
+        }
       });
 
       logger.info(`✨ New tip received! Amount: ${amount} USDC, From: ${tipperWallet?.slice(0,8)}..., To: ${recipientUsername}`);
