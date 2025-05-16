@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request, Response, CookieOptions } from 'express';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { UserModel, UserStatus, OnboardingStep } from '../models/User';
 import { Permission } from '../models/Permission';
@@ -123,25 +123,23 @@ export class AuthController {
         };
       });
 
-      // Set tokens in HttpOnly cookies
-      const cookieOptions = {
+      // Update the cookie options configuration
+      const cookieOptions: CookieOptions = {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict' as 'strict',
-        path: '/'
+        sameSite: 'none',
+        path: '/',
+        maxAge: 30 * 60 * 1000 // 30 minutes
       };
       
-      // Access token cookie - shorter expiration
-      res.cookie('accessToken', result.accessToken, {
-        ...cookieOptions,
-        maxAge: 30 * 60 * 1000, // 30 minutes
-      });
+      // Access token cookie
+      res.cookie('accessToken', result.accessToken, cookieOptions);
       
       // Refresh token cookie - longer expiration
       res.cookie('refreshToken', result.refreshToken, {
         ...cookieOptions,
         path: '/api/v1/auth/refresh', // Only sent to refresh endpoint
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
       });
 
       // Return success response without including the tokens in the response body
@@ -253,25 +251,23 @@ export class AuthController {
         bio: user.bio,
       };
 
-      // Set tokens in HttpOnly cookies
-      const cookieOptions = {
+      // Update the cookie options configuration
+      const cookieOptions: CookieOptions = {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict' as 'strict',
-        path: '/'
+        sameSite: 'none',
+        path: '/',
+        maxAge: 30 * 60 * 1000 // 30 minutes
       };
       
       // Access token cookie
-      res.cookie('accessToken', accessToken, {
-        ...cookieOptions,
-        maxAge: 30 * 60 * 1000, // 30 minutes
-      });
+      res.cookie('accessToken', accessToken, cookieOptions);
       
       // Refresh token cookie - longer expiration
       res.cookie('refreshToken', refreshToken, {
         ...cookieOptions,
         path: '/api/v1/auth/refresh', // Only sent to refresh endpoint
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
       });
 
       // Cleanup any expired refresh tokens
@@ -329,7 +325,8 @@ export class AuthController {
         res.clearCookie('refreshToken', {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict' as 'strict',
+          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+          domain: process.env.NODE_ENV === 'production' ? process.env.COOKIE_DOMAIN : undefined,
           path: '/api/v1/auth/refresh'
         });
         
@@ -342,24 +339,23 @@ export class AuthController {
       
       console.log('✅ Refresh token verified successfully, setting new cookies');
       
-      const cookieOptions = {
+      // Update the cookie options configuration
+      const cookieOptions: CookieOptions = {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict' as 'strict',
-        path: '/'
+        sameSite: 'none',
+        path: '/',
+        maxAge: 30 * 60 * 1000 // 30 minutes
       };
       
       // Set new access token in cookie
-      res.cookie('accessToken', result.accessToken, {
-        ...cookieOptions,
-        maxAge: 30 * 60 * 1000 // 30 minutes
-      });
+      res.cookie('accessToken', result.accessToken, cookieOptions);
       
       // Set the new refresh token in cookie (token rotation)
       res.cookie('refreshToken', result.refreshToken, {
         ...cookieOptions,
         path: '/api/v1/auth/refresh', // Only sent to refresh endpoint
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
       });
       
       return sendSuccess({
@@ -976,13 +972,16 @@ export class AuthController {
       res.clearCookie('accessToken', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict' as 'strict'
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        domain: process.env.NODE_ENV === 'production' ? 'usetiply.xyz' : undefined,
+        path: '/'
       });
       
       res.clearCookie('refreshToken', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict' as 'strict',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        domain: process.env.NODE_ENV === 'production' ? 'usetiply.xyz' : undefined,
         path: '/api/v1/auth/refresh'
       });
       

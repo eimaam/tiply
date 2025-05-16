@@ -23,28 +23,30 @@ const PORT = process.env.PORT || 3000;
 // for rate-limiting behind proxies (deployed api in vercel) 
 app.set('trust proxy', 1);
 
-// Configure CORS to allow credentials
-const corsOptions = {
-  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    const allowedOrigins = [
-      process.env.CLIENT_URL || 'http://localhost:5173',
-      'https://usetiply.xyz',
-      'https://www.usetiply.xyz'
-    ];
-    
-    // Allow requests with no origin (like mobile apps, curl requests, etc)
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+// Configure CORS
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://usetiply.xyz',
+  'https://www.usetiply.xyz',
+  'https://app.usetiply.xyz',
+  'https://tiply.vercel.app'
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS 🔒'));
+      console.log('🚫 CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true, // Allow cookies to be sent with requests
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-};
-// Middleware
-app.use(cors(corsOptions));
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Set-Cookie']
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser()); // Parse cookies for authentication
