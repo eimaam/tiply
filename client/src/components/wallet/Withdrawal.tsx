@@ -212,7 +212,7 @@ export const Withdrawal: React.FC<WithdrawalProps> = ({ balance, onSuccess, onEr
                   placeholder="0.00"
                   disabled={balance <= 0}
                   formatter={(value) => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  parser={(value) => value!.replace(/\$\s?|(,*)/g, '')}
+                  parser={(value) => Number(value!.replace(/\$\s?|(,*)/g, ''))}
                 />
               </Form.Item>
 

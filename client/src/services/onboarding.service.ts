@@ -47,7 +47,7 @@ class OnboardingService {
       tipAmounts: data.tipAmounts,
       theme: data.theme,
       additionalSettings: data.additionalSettings,
-      step: OnboardingStep.CUSTOMIZATION, // Send step identifier to backend
+      step: OnboardingStep.CUSTOMIZE, // Send step identifier to backend
     });
     return response.data;
   }
