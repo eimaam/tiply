@@ -19,10 +19,11 @@ export default defineConfig({
         global: 'globalThis',
       },
     },
+    include: ['@solana/web3.js', 'buffer'],
   },
   build: {
-    rollupOptions: {
-      external: ['@solana/web3.js'],
+    commonjsOptions: {
+      transformMixedEsModules: true,
     },
   },
 })
