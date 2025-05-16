@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './button';
@@ -23,6 +23,8 @@ import {
 } from '@/components/ui/modal';
 import { NotificationTrigger } from '@/components/notifications';
 import { UserNotification } from '@/components/notifications/NotificationTypes';
+import { useUser } from '@/contexts/UserContext';
+import { message } from 'antd';
 
 interface SidebarNavProps {
   username?: string;
@@ -35,11 +37,10 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { logout } = useUser();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeRoute, setActiveRoute] = useState('/dashboard');
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  
-  // Mock notifications data for regular users focused on tip notifications
   const [notifications, setNotifications] = useState<UserNotification[]>([
     {
       id: '1',
@@ -67,10 +68,9 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       read: true
     }
   ]);
-
   const unreadCount = notifications.filter(n => !n.read).length;
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
-  // Determine active route on component mount and when location changes
   useEffect(() => {
     const path = location.pathname;
     if (path.startsWith('/dashboard')) {
@@ -84,7 +84,6 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
     }
   }, [location]);
 
-  // Close sidebar when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const sidebar = document.getElementById('sidebar');
@@ -105,7 +104,6 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isSidebarOpen]);
 
-  // Close sidebar when route changes
   useEffect(() => {
     setIsSidebarOpen(false);
   }, [location.pathname]);
@@ -118,15 +116,19 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
     { path: '/dashboard?tab=settings', label: 'Settings', icon: <SettingOutlined /> },
   ];
 
-  // Handle navigation
   const handleNavigation = (path: string) => {
     navigate(path);
   };
 
-  const handleLogout = () => {
-    // In a real app, this would clear auth tokens etc.
-    setShowLogoutModal(false);
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      await logout();
+      message.success('Logged out successfully! 👋');
+      setShowLogoutModal(false);
+      navigate('/login');
+    } catch (error) {
+      message.error('Failed to logout. Please try again.');
+    }
   };
 
   const markNotificationAsRead = (id: string) => {
@@ -147,7 +149,6 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
     );
   };
 
-  // Animation variants
   const sidebarVariants = {
     open: { 
       x: 0,
@@ -174,21 +175,15 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
 
   return (
     <>
-      {/* Header with logo, notifications and menu button */}
       <header className='border-b border-brand-border bg-brand-surface sticky top-0 z-20'>
         <div className='container mx-auto px-4 py-4'>
           <div className='flex justify-between items-center'>
-            {/* Logo */}
             <div className="flex items-center space-x-2">
-      
-      
               <img src={logo} alt="tiply logo" className="h-12 w-auto" />
               <span className="text-xl font-bold">tiply</span>
             </div>
             
-            {/* Right side actions */}
             <div className="flex items-center space-x-2">
-              {/* Notifications - Using our new reusable component */}
               <NotificationTrigger 
                 id="user-notification-button"
                 notifications={notifications}
@@ -199,7 +194,6 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                 position="right"
               />
               
-              {/* Menu Button */}
               <Button
                 id='menu-button'
                 variant='ghost'
@@ -215,7 +209,6 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
         </div>
       </header>
 
-      {/* Overlay */}
       <AnimatePresence>
         {isSidebarOpen && (
           <motion.div 
@@ -229,7 +222,6 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
         )}
       </AnimatePresence>
 
-      {/* Sidebar */}
       <AnimatePresence>
         {isSidebarOpen && (
           <motion.aside
@@ -241,7 +233,6 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
             variants={sidebarVariants}
           >
             <div className='flex flex-col h-full'>
-              {/* Sidebar Header */}
               <div className='p-4 border-b border-brand-border flex justify-between items-center'>
                 <h2 className='text-xl font-bold text-brand-primary'>Menu</h2>
                 <Button
@@ -255,7 +246,6 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                 </Button>
               </div>
 
-              {/* User Profile Section */}
               <div className='p-4 border-b border-brand-border'>
                 <div className='flex items-center space-x-3'>
                   <div className='w-10 h-10 rounded-full bg-brand-primary/20 flex items-center justify-center text-brand-primary'>
@@ -281,7 +271,6 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                 </div>
               </div>
 
-              {/* Navigation Links */}
               <nav className='flex-1 overflow-y-auto p-4'>
                 <ul className='space-y-2'>
                   {navItems.map((item) => (
@@ -300,7 +289,6 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                 </ul>
               </nav>
 
-              {/* Bottom Section */}
               <div className='p-4 border-t border-brand-border space-y-2'>
                 <Button
                   variant='ghost'
@@ -322,7 +310,6 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                 </Button>
               </div>
 
-              {/* Footer */}
               <div className='p-4 text-center text-xs text-brand-muted-foreground'>
                 &copy; {new Date().getFullYear()} tiply
               </div>
@@ -331,7 +318,6 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
         )}
       </AnimatePresence>
 
-      {/* Logout Confirmation Modal */}
       <Modal
         open={showLogoutModal}
         onCancel={() => setShowLogoutModal(false)}

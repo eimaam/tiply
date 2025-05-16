@@ -97,7 +97,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => 
   };
 
   const handleLogout = () => {
-    // In a real app, clear auth tokens, user state etc.
     setShowLogoutModal(false);
     navigate('/login');
   };

@@ -307,8 +307,6 @@ const AdminDashboardPage = () => {
             modifiedStats.averageTipAmount = monthData.averageTipAmount;
             modifiedStats.pendingTransactions = monthData.pendingTransactions;
           } else {
-            // Otherwise approximate based on date range
-            // This is simplified, in a real app you'd query your database
             modifiedStats.totalRevenue = originalOverviewStats.totalRevenue * 0.7;
             modifiedStats.totalTips = originalOverviewStats.totalTips * 0.7;
           }

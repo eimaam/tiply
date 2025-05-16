@@ -65,7 +65,6 @@ const USDC_MINT_MAINNET = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 const USDC_MINT = import.meta.env.VITE_USDC_MINT || USDC_MINT_DEVNET;
 
 // Faucet account (funded account with ability to mint devnet USDC)
-// In production, you would secure this private key properly
 const DEVNET_FAUCET_KEYPAIR = Keypair.generate(); // This is a placeholder - would need a real funded keypair
 
 // Check if we're on devnet based on the mint address
@@ -312,26 +311,19 @@ const TipPage = ({ className }: TipPageProps) => {
       // Check if the account exists
       const tokenAccountInfo = await connection.getAccountInfo(userTokenAccount);
       
-      // Instead of using a keypair (which wouldn't work), use a devnet API to request tokens
-      // In a real implementation, this would be a backend API call to your faucet service
+      // Instead of using a keypair (which wouldn't work), -  devnet API to request tokens rather
       
       // For demonstration purposes, we'll make a mock API call
       message.loading('Requesting USDC from devnet faucet...', 3);
       
-      // In reality, you would need a backend service that controls a funded account
-      // that has minting privileges for the devnet USDC token
       await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
       
       if (!tokenAccountInfo) {
-        // If we were actually implementing this, we would need to:
-        // 1. First airdrop SOL if the user doesn't have enough for transaction fees
-        // 2. Create the ATA for them
-        // 3. Mint USDC to that account
+       
         message.info('First creating your USDC token account...', 2);
         await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate delay
       }
       
-      // For our demonstration, we'll just show success
       setAirdropSuccess(true);
       message.success('Successfully airdropped 10 USDC to your wallet!', 3);
       

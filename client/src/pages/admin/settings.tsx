@@ -175,7 +175,6 @@ const AdminSettingsPage = () => {
   const resetToDefault = () => {
     setIsResetModalOpen(false);
     
-    // In a real app, you'd fetch default settings from the API
     // For now we'll just show a notification
     notification.info({
       message: 'Settings Reset',
