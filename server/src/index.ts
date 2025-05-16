@@ -20,6 +20,9 @@ import { connectDB } from './config/database';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// for rate-limiting behind proxies (deployed api in vercel) 
+app.set('trust proxy', 1);
+
 // Configure CORS to allow credentials
 const corsOptions = {
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
