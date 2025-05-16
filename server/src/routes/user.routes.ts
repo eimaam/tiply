@@ -214,4 +214,8 @@ router.put('/:id/featured',
   withAuth(UserController.toggleFeatured)
 );
 
+// Tip settings routes
+router.get('/tip-settings', authenticate, UserController.getTipSettings);
+router.put('/tip-settings', authenticate, UserController.updateTipSettings);
+
 export default router;

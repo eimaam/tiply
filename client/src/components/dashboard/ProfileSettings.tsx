@@ -188,7 +188,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ className }) =
   return (
     <DashboardCard 
       title="Profile Settings"
-      description="Customize your public profile information"
+      // description="Customize your public profile information"
       className={className}
     >
       {error && (

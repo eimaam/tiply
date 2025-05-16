@@ -9,7 +9,7 @@ import {
   EditOutlined // Changed from PaletteOutlined to EditOutlined
 } from '@ant-design/icons';
 import { motion } from 'framer-motion';
-import { Button, ButtonProps } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { DashboardCard } from '@/components/ui/dashboard/DashboardCard';
 import { userService } from '@/services/user.service';
@@ -146,7 +146,7 @@ export const TipSettings: React.FC<TipSettingsProps> = ({ className }) => {
   return (
     <DashboardCard 
       title="Tip Settings"
-      description="Customize how supporters can tip you"
+      // description="Customize how supporters can tip you"
       className={className}
     >
       {error && (

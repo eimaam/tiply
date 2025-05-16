@@ -665,4 +665,48 @@ export class UserController {
       return handleControllerError(error, res);
     }
   }
+
+  static async getTipSettings(req: AuthenticatedRequest, res: Response) {
+    try {
+      const user = await UserModel.findById(req.user.userId);
+      if (!user) {
+        return responseHandler.notFound(res, 'User not found');
+      }
+      return responseHandler.success(res, 'Tip settings retrieved', {
+        defaultMessage: user.customization?.defaultMessage || 'Thanks for supporting my work! 💖',
+        suggestedAmounts: user.customization?.tipOptions || [],
+        allowCustomAmount: user.customization?.allowCustomAmounts || true,
+        minimumAmount: user.customization?.minimumTipAmount || 1,
+        accentColor: user.customization?.primaryColor || '#8B5CF6',
+        showSocialOnTipPage: true
+      });
+    } catch (error) {
+      return responseHandler.serverError(res, 'Failed to retrieve tip settings');
+    }
+  }
+
+  static async updateTipSettings(req: AuthenticatedRequest, res: Response) {
+    try {
+      const user = await UserModel.findById(req.user.userId);
+      if (!user) {
+        return responseHandler.notFound(res, 'User not found');
+      }
+
+      const { defaultMessage, suggestedAmounts, allowCustomAmount, minimumAmount, accentColor, showSocialOnTipPage } = req.body;
+
+      user.customization = {
+        ...user.customization,
+        defaultMessage,
+        tipOptions: suggestedAmounts,
+        allowCustomAmounts: allowCustomAmount,
+        minimumTipAmount: minimumAmount,
+        primaryColor: accentColor
+      };
+
+      await user.save();
+      return responseHandler.success(res, 'Tip settings updated successfully', user.customization);
+    } catch (error) {
+      return responseHandler.error(res, error);
+    }
+  }
 }

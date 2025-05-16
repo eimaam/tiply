@@ -396,7 +396,6 @@ export function Dashboard() {
                   currencies={Object.values(CurrencyType)}
                   showReset={true}
                   className="mb-4"
-                  compact={true}
                 />
                 
                 {!USER_IS_PREMIUM && (
@@ -491,9 +490,6 @@ export function Dashboard() {
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <WalletSection 
-              user={user} 
-              balance={currentBalance}
-              onWithdraw={handleWithdrawal}
             />
           </div>
           

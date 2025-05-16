@@ -142,7 +142,7 @@ export const OnboardingCompleteModal: FC<OnboardingCompleteModalProps> = ({
             className="bg-gradient-to-r from-brand-primary to-brand-accent"
             disabled={isLoading}
             onClick={() => {
-              if (!user?.walletAddress) {
+              if (!user?.depositWalletAddress) {
                 // call the complete onboarding function
                 handleComplete();
               } else {

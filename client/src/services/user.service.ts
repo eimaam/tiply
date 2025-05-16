@@ -132,4 +132,14 @@ export const userService = {
       throw error;
     }
   },
+
+  getTipSettings: async () => {
+    const response = await publicApi.get('/users/tip-settings');
+    return response.data;
+  },
+
+  updateTipSettings: async (settings: any) => {
+    const response = await publicApi.put('/users/tip-settings', settings);
+    return response.data;
+  },
 };

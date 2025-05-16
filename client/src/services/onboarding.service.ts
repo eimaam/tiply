@@ -2,16 +2,7 @@ import { privateApi } from '@/lib/api';
 import { OnboardingStep, StepData } from '@/contexts/OnboardingContext';
 
 class OnboardingService {
-  /**
-   * Save wallet information during onboarding
-   */
-  async saveWallet(data: StepData) {
-    const response = await privateApi.post('/auth/onboarding/wallet', {
-      walletAddress: data.walletAddress,
-      step: OnboardingStep.WALLET, // Send step identifier to backend
-    });
-    return response.data;
-  }
+  
 
   /**
    * Save username during onboarding
