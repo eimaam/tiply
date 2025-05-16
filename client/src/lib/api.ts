@@ -87,8 +87,6 @@ const responseInterceptor = (response: AxiosResponse) => {
 
 const errorInterceptor = async (error: AxiosError) => {
   const { response, config } = error;
-  console.log({ response })
-  console.log({ isRefreshing})
 
   // Log more details when we get a 401 response
   if (response?.status === 401) {
