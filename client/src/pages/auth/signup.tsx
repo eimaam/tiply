@@ -8,7 +8,8 @@ import { Form, message } from 'antd'
 import { useUser } from '@/contexts/UserContext'
 
 export function SignUp() {
-  const { register, isLoading } = useUser()
+  const { register } = useUser()
+  const [isLoading, setIsLoading] = React.useState<boolean>(false)
   const [form] = Form.useForm()
   
   // Animation variants
@@ -34,11 +35,21 @@ export function SignUp() {
         return
       }
 
-      await register({
-        email: values.email,
-        password: values.password,
-        username: values.email.split('@')[0], // Use part of email as temporary username
-      })
+      try {
+        setIsLoading(true)
+        await register({
+          email: values.email,
+          password: values.password,
+          username: values.email.split('@')[0], // Use part of email as temporary username
+        })
+        
+      } catch (error) {
+        console.error('Registration error:', error)
+        message.error('Registration failed. Please try again.')
+      } finally {
+        setIsLoading(false)
+      }
+
       
       // Note: No need to handle navigation manually
       // The UserContext register function will handle it
