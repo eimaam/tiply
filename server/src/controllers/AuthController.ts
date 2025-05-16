@@ -1,4 +1,4 @@
-import { Request, Response, CookieOptions } from 'express';
+import { Request, Response } from 'express';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { UserModel, UserStatus, OnboardingStep } from '../models/User';
 import { Permission } from '../models/Permission';
@@ -124,11 +124,10 @@ export class AuthController {
       });
 
       // Set tokens in HttpOnly cookies
-      const cookieOptions: CookieOptions = {
+      const cookieOptions = {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        domain: process.env.NODE_ENV === 'production' ? '.usetiply.xyz' : undefined,
+        sameSite: 'strict' as 'strict',
         path: '/'
       };
       
@@ -255,11 +254,10 @@ export class AuthController {
       };
 
       // Set tokens in HttpOnly cookies
-      const cookieOptions: CookieOptions = {
+      const cookieOptions = {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        domain: process.env.NODE_ENV === 'production' ? '.usetiply.xyz' : undefined,
+        sameSite: 'strict' as 'strict',
         path: '/'
       };
       
@@ -344,11 +342,10 @@ export class AuthController {
       
       console.log('✅ Refresh token verified successfully, setting new cookies');
       
-      const cookieOptions: CookieOptions = {
+      const cookieOptions = {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        domain: process.env.NODE_ENV === 'production' ? '.usetiply.xyz' : undefined,
+        sameSite: 'strict' as 'strict',
         path: '/'
       };
       

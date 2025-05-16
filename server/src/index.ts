@@ -20,7 +20,7 @@ import { connectDB } from './config/database';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Trust proxy - required for secure cookies behind reverse proxies
+// for rate-limiting behind proxies (deployed api in vercel) 
 app.set('trust proxy', 1);
 
 // Configure CORS to allow credentials
@@ -41,14 +41,13 @@ const corsOptions = {
   },
   credentials: true, // Allow cookies to be sent with requests
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Debug-Refresh']
+  allowedHeaders: ['Content-Type', 'Authorization']
 };
-
-// Apply middleware
+// Middleware
 app.use(cors(corsOptions));
-app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser()); // Parse cookies for authentication
 
 // Apply global rate limiter to all requests
 app.use(globalRateLimiter);
@@ -76,7 +75,7 @@ app.use('/api/v1/health', (req: Request, res: Response) => {
 app.get('/', (req: Request, res: Response) => {
   res.status(200).json({
     success: true,
-    message: 'Welcome to the Tiply API ✨',
+    message: 'Welcome to the tiply v1 API ✨',
     version: '1.0.0',
   });
 });
