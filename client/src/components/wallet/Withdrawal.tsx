@@ -125,7 +125,7 @@ export const Withdrawal: React.FC<WithdrawalProps> = ({ balance, onSuccess, onEr
 
       // Initiate withdrawal
       const response = await transactionService.createWithdrawal(withdrawalData);
-      
+      console.log('Withdrawal response:', response);
       // Store the withdrawal ID
       setWithdrawalId(response.transactionId);
       

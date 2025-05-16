@@ -23,6 +23,9 @@ router.get(
   TransactionController.getTransactionStatus
 );
 
+// Get transaction status (public)
+router.get('/status/:id', globalRateLimiter, TransactionController.getTransactionStatus);
+
 /**
  * User Transaction Routes
  */

@@ -511,6 +511,12 @@ const TipPage = ({ className }: TipPageProps) => {
             
             tipData = response.data;
             console.log('Tip submission response:', tipData);
+
+            // Store the transaction ID from the response
+            if (tipData?.data?._id) {
+              localStorage.setItem('lastTransactionId', tipData.data._id);
+            }
+
             break; // Success, exit the retry loop
           } catch (apiError: any) {
             console.error(`Tip submission attempt ${retryCount + 1} failed:`, apiError);
@@ -536,6 +542,46 @@ const TipPage = ({ className }: TipPageProps) => {
           setTipSuccess(true);
           setCurrentStep(3);
           setTimeout(triggerConfetti, 300);
+
+          // Start polling for transaction status
+          const transactionId = tipData.data._id;
+          if (transactionId) {
+            const checkStatus = async () => {
+              try {
+                const statusResponse = await publicApi.get(`/transactions/status/${transactionId}`);
+                const status = statusResponse.data?.data?.status;
+                
+                if (status === 'completed') {
+                  message.success('Transaction completed successfully! 🎉');
+                  return true;
+                } else if (status === 'failed') {
+                  message.error('Transaction failed. Please try again.');
+                  return true;
+                }
+                return false;
+              } catch (error) {
+                console.error('Error checking transaction status:', error);
+                return false;
+              }
+            };
+
+            // Poll every 5 seconds for up to 2 minutes
+            let attempts = 0;
+            const maxAttempts = 24; // 2 minutes total
+            const interval = setInterval(async () => {
+              if (attempts >= maxAttempts) {
+                clearInterval(interval);
+                return;
+              }
+              
+              const isDone = await checkStatus();
+              if (isDone) {
+                clearInterval(interval);
+              }
+              
+              attempts++;
+            }, 5000);
+          }
         } else {
           throw new Error(tipData?.message || 'Backend failed to process the tip');
         }

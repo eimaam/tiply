@@ -338,12 +338,12 @@ export class CircleService {
       };
 
       const response = await client.getTransaction(input);
-      
+      console.dir(response?.data, { depth: null })
       if (!response.data) {
         throw new Error('Failed to get transaction details');
       }
 
-      const transaction = response.data as CircleTransactionResponse;
+      const transaction = response?.data?.transaction as any
 
       return {
         id: transaction.id,

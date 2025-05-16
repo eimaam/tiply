@@ -186,14 +186,21 @@ export class TransactionController {
           },
           { session }
         );
-
-        return withdrawal;
+        return {...withdrawal, transactionId: withdrawal?._id}
       });
-
       logger.info(`💸 Withdrawal initiated! Amount: ${amount} USDC, To: ${withdrawalAddress.slice(0,8)}...`);
 
-      return responseHandler.success(res, 'Withdrawal initiated successfully! 🎉', result);
+      // Return response with transaction IDs
+      return responseHandler.success(res, 'Withdrawal initiated successfully! 🎉', {
+        transactionId: result.transactionId,
+        circleTransactionId: result.metadata?.circle?.transactionId,
+        status: result.status,
+        amount: result.amount,
+        withdrawalAddress: result.walletAddress,
+        createdAt: result.createdAt
+      });
     } catch (error) {
+      logger.error('Withdrawal error:', error);
       return responseHandler.serverError(res, 'An unexpected error occurred');
     }
   }
@@ -543,52 +550,37 @@ export class TransactionController {
   }
 
   /**
-   * Get transaction status by ID (public endpoint for tip page)
+   * Get transaction status
    * @param req - Express request object
    * @param res - Express response object
    */
   static async getTransactionStatus(req: Request, res: Response) {
     try {
-      const { transactionId } = req.params;
+      const { id } = req.params;
 
-      // Validate transaction ID
-      if (!mongoose.Types.ObjectId.isValid(transactionId)) {
-        return sendError({
-          res,
-          message: 'Invalid transaction ID format',
-          statusCode: 400,
-          code: 'INVALID_ID_FORMAT'
-        });
+      if (!id) {
+        return responseHandler.badRequest(res, 'Transaction ID is required');
       }
 
       // Find transaction
-      const transaction = await Transaction.findById(transactionId).select('status amount txHash createdAt completedAt');
-
+      const transaction = await Transaction.findById(id);
+      
       if (!transaction) {
-        return sendError({
-          res,
-          message: 'Transaction not found',
-          statusCode: 404
-        });
+        return responseHandler.notFound(res, 'Transaction not found');
       }
 
-      // Return transaction status
-      return sendSuccess({
-        res,
-        message: 'Transaction status retrieved successfully',
-        data: {
-          transaction: {
-            id: transaction._id,
-            status: transaction.status,
-            amount: transaction.amount,
-            txHash: transaction.txHash,
-            createdAt: transaction.createdAt,
-            completedAt: transaction.completedAt
-          }
-        }
+      return responseHandler.success(res, 'Transaction status retrieved successfully', {
+        status: transaction.status,
+        amount: transaction.amount,
+        currency: transaction.currency,
+        createdAt: transaction.createdAt,
+        completedAt: transaction.completedAt,
+        metadata: transaction.metadata
       });
-    } catch (error) {
-      return handleControllerError(error, res);
+
+    } catch (error: any) {
+      logger.error('Error getting transaction status:', error);
+      return responseHandler.serverError(res, error.message);
     }
   }
 
@@ -610,18 +602,8 @@ export class TransactionController {
 
       const { transactionId } = req.params;
 
-      // Validate transaction ID
-      // if (!mongoose.Types.ObjectId.isValid(transactionId)) {
-      //   return sendError({
-      //     res,
-      //     message: 'Invalid transaction ID',
-      //     statusCode: 400,
-      //     code: 'INVALID_ID_FORMAT'
-      //   });
-      // }
-console.log({ transactionId })
-      // Find transaction
-      const transaction = await Transaction.findOne({ metadata : { circleTransaction: { id: transactionId } } })
+      // Find transaction by MongoDB ID
+      const transaction = await Transaction.findById(transactionId) as any;
 
       if (!transaction) {
         return sendError({
@@ -630,7 +612,7 @@ console.log({ transactionId })
           statusCode: 404
         });
       }
-console.log({ transaction })
+
       // Only the transaction owner can check status
       if (transaction.recipient.toString() !== req.user.userId && 
           !['admin', 'super_admin'].includes(req.user.role)) {
@@ -655,25 +637,31 @@ console.log({ transaction })
       let circleStatus = null;
       let updatedStatus = transaction.status;
 
-      // Check with Circle for latest status if we have a transaction ID and status is not final
-      if (transaction.txHash && 
+      // Check with Circle for latest status if we have a Circle transaction ID
+      const circleTransactionId = transaction.metadata?.circle?.transactionId;
+      if (circleTransactionId && 
           ![TransactionStatus.COMPLETED, TransactionStatus.FAILED, TransactionStatus.CANCELLED].includes(transaction.status)) {
         try {
           // Get status from Circle API
-          const statusResult = await CircleService.getWithdrawalStatus(transaction.metadata?.circleTransaction?.id);
-          console.log({ statusResult })
+          const statusResult = await CircleService.getWithdrawalStatus(circleTransactionId);
           circleStatus = statusResult;
           
           // Update transaction status based on Circle status
-          if (statusResult.status === 'complete' && transaction.status !== TransactionStatus.COMPLETED) {
+          if (statusResult.state === "COMPLETE" && transaction.status !== TransactionStatus.COMPLETED) {
             transaction.status = TransactionStatus.COMPLETED;
             transaction.completedAt = new Date();
+            transaction.txHash = statusResult.txHash;
+            transaction.blockExplorerUrl = `https://solscan.io/tx/${statusResult.txHash}${SOLANA.RPC_URL.includes('devnet') ? '?cluster=devnet' : ''}`;
+            transaction.metadata.circle.txHash = statusResult.txHash;
+            transaction.metadata.circle.state = statusResult.state;
+            transaction.metadata.circle.networkFee = statusResult.networkFee;
             await transaction.save();
             updatedStatus = TransactionStatus.COMPLETED;
-          } else if (statusResult.status === 'failed' && transaction.status !== TransactionStatus.FAILED) {
+          } else if (statusResult.state === TransactionState.Failed && transaction.status !== TransactionStatus.FAILED) {
             transaction.status = TransactionStatus.FAILED;
+            if (!transaction.metadata) transaction.metadata = {};
             transaction.metadata.error = {
-              message: statusResult.errorReason || 'Transaction failed on blockchain',
+              message: statusResult.failureReason || 'Transaction failed on blockchain',
               timestamp: new Date()
             };
             await transaction.save();
@@ -690,8 +678,8 @@ console.log({ transaction })
         res,
         message: 'Withdrawal status retrieved successfully',
         data: {
-          transactionId: transaction._id,
-          circleTransactionId: transaction.txHash,
+          transactionId: transaction._id.toString(),
+          circleTransactionId: circleTransactionId,
           status: updatedStatus,
           amount: transaction.amount,
           walletAddress: transaction.walletAddress,
