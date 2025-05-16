@@ -4,7 +4,7 @@ import { privateApi } from '@/lib/api';
  * Interface for withdrawal request
  */
 export interface WithdrawalRequest {
-  address: string;
+  withdrawalAddress: string;
   amount: number;
 }
 
@@ -12,14 +12,33 @@ export interface WithdrawalRequest {
  * Interface for withdrawal response
  */
 export interface WithdrawalResponse {
-  id: string;
+  transactionId: string;
+  circleTransactionId: string;
   status: string;
   amount: number;
-  fee?: number;
-  netAmount: number;
-  address: string;
-  txHash?: string;
+  withdrawalAddress: string;
   createdAt: string;
+}
+
+/**
+ * Interface for withdrawal status
+ */
+export interface WithdrawalStatus {
+  transactionId: string;
+  circleTransactionId: string;
+  status: string;
+  amount: number;
+  walletAddress: string;
+  createdAt: string;
+  completedAt?: string;
+  circleDetails?: {
+    status: string;
+    amount: string;
+    destinationAddress: string;
+    txHash?: string;
+    errorReason?: string;
+    updatedAt: string;
+  };
 }
 
 /**
@@ -27,22 +46,32 @@ export interface WithdrawalResponse {
  */
 export const transactionService = {
   /**
-   * Create a withdrawal request and save the withdrawal address to user profile
+   * Create a withdrawal request
    * @param data - Withdrawal request data
    * @returns Withdrawal response
    */
   createWithdrawal: async (data: WithdrawalRequest): Promise<WithdrawalResponse> => {
     try {
-      // First update the user's withdrawalWalletAddress
-      await privateApi.put('/users/profile/wallet', {
-        withdrawalWalletAddress: data.address
-      });
-      
-      // Then create the withdrawal transaction
-      const response = await privateApi.post('/transactions/withdraw', data);
+      // Create the withdrawal transaction
+      const response = await privateApi.post('/transactions/withdrawals', data);
       return response.data.data;
     } catch (error) {
       console.error('Failed to create withdrawal:', error);
+      throw error;
+    }
+  },
+  
+  /**
+   * Get status of a withdrawal transaction
+   * @param transactionId - Transaction ID to check status for
+   * @returns Withdrawal status
+   */
+  getWithdrawalStatus: async (transactionId: string): Promise<WithdrawalStatus> => {
+    try {
+      const response = await privateApi.get(`/transactions/withdrawals/${transactionId}`);
+      return response.data.data;
+    } catch (error) {
+      console.error('Failed to get withdrawal status:', error);
       throw error;
     }
   },
@@ -61,4 +90,19 @@ export const transactionService = {
       throw error;
     }
   },
+  
+  /**
+   * Get a specific transaction by ID
+   * @param transactionId - Transaction ID to fetch
+   * @returns Transaction details
+   */
+  getTransaction: async (transactionId: string) => {
+    try {
+      const response = await privateApi.get(`/transactions/${transactionId}`);
+      return response.data.data.transaction;
+    } catch (error) {
+      console.error('Failed to fetch transaction:', error);
+      throw error;
+    }
+  }
 };

@@ -1,27 +1,73 @@
 import { Circle, CircleEnvironments } from "@circle-fin/circle-sdk";
-import { CIRCLE_ENV } from "../config/env.config";
+import { CIRCLE_ENV, SOLANA } from "../config/env.config";
 import {
   CircleDeveloperControlledWalletsClient,
   CreateWalletsInput,
   initiateDeveloperControlledWalletsClient,
-} from "@circle-fin/developer-controlled-wallets";
-import {
   Blockchain,
+  TokenBlockchain,
   AccountType,
+  FeeLevel,
+  CreateTransferTransactionInput,
+  WithIdempotencyKey,
+  TokenAddressAndBlockchainInput,
+  FeeConfiguration,
+  TransactionResponseData,
+  TransactionState,
+  GetTransactionInput,
+  CreateTransferTransactionForDeveloperResponseData,
+  TransactionData,
+  TransactionResponse,
+  TransactionType,
+  CreateTransactionInput,
+  Fee
 } from "@circle-fin/developer-controlled-wallets";
 import { v4 as uuidv4 } from "uuid";
 import { logger } from "../utils/logger";
 
-export const circleClient = () => {
-  const apiKey = CIRCLE_ENV.apiKey;
-  const entitySecret = CIRCLE_ENV.entitySecret;
+// Define transaction response interface based on Circle API
+interface CircleTransactionResponse {
+  id: string;
+  blockchain: string;
+  tokenId: string;
+  walletId: string;
+  sourceAddress: string;
+  destinationAddress: string;
+  type: TransactionType;
+  custodyType: string;
+  state: TransactionState;
+  amounts: string[];
+  nfts: any;
+  txHash: string;
+  blockHash: string;
+  blockHeight: number;
+  networkFee: string;
+  firstConfirmDate: string;
+  operation: string;
+  feeLevel: string;
+  estimatedFee: {
+    gasLimit: string;
+    baseFee: string;
+    priorityFee: string;
+    maxFee: string;
+  };
+  refId: string;
+  abiParameters: any;
+  createDate: string;
+  updateDate: string;
+  errorCode?: string;
+  failureReason?: string;
+}
 
-  const client = initiateDeveloperControlledWalletsClient({
-    apiKey: apiKey as string,
-    entitySecret: entitySecret as string,
+/**
+ * Circle client
+ * @returns Circle client
+ */
+const circleClient = (): CircleDeveloperControlledWalletsClient => {
+  return initiateDeveloperControlledWalletsClient({
+    apiKey: CIRCLE_ENV.apiKey || '',
+    entitySecret: CIRCLE_ENV.entitySecret || '',
   });
-
-  return client;
 };
 
 export class CircleService {
@@ -207,6 +253,116 @@ export class CircleService {
       return response.data?.status || 'unknown';
     } catch (error: any) {
       logger.error(`❌ Error getting transfer status: ${error?.message || 'Unknown error'}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Withdraw USDC from Circle wallet to user's external wallet address
+   * @param walletId - The Circle wallet ID (source)
+   * @param destinationAddress - The destination Solana wallet address
+   * @param amount - Amount in USDC to withdraw
+   * @returns Transaction ID and status
+   */
+  static async withdrawToExternalWallet(
+    walletId: string,
+    destinationAddress: string,
+    amount: number
+  ) {
+    const client = circleClient();
+    const idempotencyKey = uuidv4();
+
+    try {
+      logger.info(`🔄 Initiating withdrawal of ${amount} USDC from wallet ${walletId} to ${destinationAddress}`);
+      
+      if (!CIRCLE_ENV.usdcTokenId) {
+        throw new Error('USDC token ID not configured');
+      }
+
+      // Calculate network fee (we'll use low fee level)
+      const feeConfig: FeeConfiguration<FeeLevel> = {
+        type: 'level',
+        config: {
+          feeLevel: "LOW"
+        }
+      };
+
+      // Prepare transaction input
+      const transactionInput: CreateTransferTransactionInput = {
+        walletId,
+        tokenId: CIRCLE_ENV.usdcTokenId,
+        destinationAddress,
+        amount: [amount.toString()],
+        fee: feeConfig,
+        refId: `withdrawal-${idempotencyKey}`
+      };
+
+      // Call Circle API to create and execute the transaction
+      const response = await client.createTransaction(transactionInput);
+      
+      if (!response.data) {
+        throw new Error('Withdrawal failed: No transaction data received');
+      }
+
+      const txData = response.data;
+
+      logger.info(`✅ Withdrawal transaction created! Transaction ID: ${txData.id}`);
+      
+      // Return transaction details with proper typing
+      return {
+        transactionId: txData.id,
+        status: txData.state || TransactionState.Initiated,
+        amount: parseFloat(amount.toString()),
+        destinationAddress,
+        createDate: new Date().toISOString(),
+        updateDate: new Date().toISOString()
+      };
+    } catch (error: any) {
+      logger.error(`❌ Withdrawal failed: ${error?.response?.data?.message || error?.message || 'Unknown error'}`);
+      console.dir(error?.response?.data?.errors || error, { depth: null });
+      throw error;
+    }
+  }
+
+  /**
+   * Check status of a withdrawal transaction
+   * @param transactionId - Circle transaction ID
+   * @returns Transaction status and details
+   */
+  static async getWithdrawalStatus(transactionId: string) {
+    const client = circleClient();
+
+    try {
+      const input: GetTransactionInput = {
+        id: transactionId
+      };
+
+      const response = await client.getTransaction(input);
+      
+      if (!response.data) {
+        throw new Error('Failed to get transaction details');
+      }
+
+      const transaction = response.data as CircleTransactionResponse;
+
+      return {
+        id: transaction.id,
+        state: transaction.state,
+        transactionType: transaction.type,
+        walletId: transaction.walletId,
+        sourceAddress: transaction.sourceAddress,
+        destinationAddress: transaction.destinationAddress,
+        amount: transaction.amounts?.[0],
+        blockchain: transaction.blockchain,
+        txHash: transaction.txHash,
+        networkFee: transaction.networkFee,
+        createDate: transaction.createDate,
+        updateDate: transaction.updateDate,
+        errorCode: transaction.errorCode,
+        failureReason: transaction.failureReason
+      };
+    } catch (error: any) {
+      logger.error(`❌ Error getting withdrawal status: ${error?.message || 'Unknown error'}`);
       throw error;
     }
   }

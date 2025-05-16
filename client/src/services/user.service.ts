@@ -43,7 +43,7 @@ export const userService = {
    */
   updateWalletAddress: async (address: string): Promise<{ data: User }> => {
     try {
-      const response = await privateApi.put('/user/wallet', { withdrawalWalletAddress: address });
+      const response = await privateApi.put('/users/profile/wallet', { withdrawalWalletAddress: address });
       return response.data;
     } catch (error) {
       console.error('Failed to update wallet address:', error);
@@ -85,7 +85,20 @@ export const userService = {
    */
   requestWithdrawal: async (amount: number): Promise<{ data: any }> => {
     try {
-      const response = await privateApi.post('/transactions/withdraw', { amount });
+      // Get the user's withdrawal wallet address
+      const userResponse = await privateApi.get('/auth/me');
+      const withdrawalWalletAddress = userResponse.data?.data?.user?.withdrawalWalletAddress;
+      
+      if (!withdrawalWalletAddress) {
+        throw new Error('No withdrawal wallet address set. Please set a withdrawal address first.');
+      }
+      
+      // Use the transaction service to initiate the withdrawal
+      const response = await privateApi.post('/transactions/withdrawals', { 
+        withdrawalAddress: withdrawalWalletAddress,
+        amount 
+      });
+      
       return response.data;
     } catch (error) {
       console.error('Failed to request withdrawal:', error);

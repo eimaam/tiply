@@ -37,6 +37,7 @@ export interface ITransaction extends Document {
   userAgent?: string;
   createdAt: Date;
   updatedAt: Date;
+  completedAt?: Date;
   txSignature: string;
   message?: string;
   recipient: Schema.Types.ObjectId;
@@ -44,6 +45,7 @@ export interface ITransaction extends Document {
   fee: number;
   netAmount: number;
   blockExplorerUrl: string;
+  walletAddress?: string;
 }
 
 /**
@@ -130,6 +132,13 @@ const TransactionSchema = new Schema<ITransaction>(
       type: String,
       required: true,
     },
+    completedAt: {
+      type: Date,
+    },
+    walletAddress: {
+      type: String,
+      trim: true,
+    }
   },
   {
     timestamps: true,

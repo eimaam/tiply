@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { Transaction, TransactionType, TransactionStatus } from '../models/Transaction';
-import { User } from '../models/User';
+import { UserModel } from '../models/User';
 import { 
   sendSuccess, 
   sendError, 
@@ -10,6 +10,14 @@ import {
 } from '../utils/responseHandler';
 import { withMongoTransaction } from '../utils/mongoTransaction';
 import { AuthenticatedRequest } from '../types/user.types';
+import { CircleService } from '../services/circle.service';
+import { isSolanaWalletAddress } from '../utils/walletAddressValidator';
+import { v4 as uuidv4 } from 'uuid';
+import { SOLANA } from '../config/env.config';
+import { logger } from '../utils/logger';
+import { Types } from 'mongoose';
+import { responseHandler } from '../utils/responseHandler';
+import { TransactionState } from '@circle-fin/developer-controlled-wallets';
 
 /**
  * Transaction Controller Class
@@ -90,131 +98,103 @@ export class TransactionController {
    * @param req - Express request object
    * @param res - Express response object
    */
-  static async createWithdrawal(req: Request, res: Response) {
+  static async createWithdrawal(req: AuthenticatedRequest, res: Response) {
     try {
       // User must be authenticated
       if (!req.user) {
-        return sendError({
-          res,
-          message: 'Authentication required',
-          statusCode: 401
-        });
+        return responseHandler.unauthorized(res, 'Authentication required');
       }
 
-      const { amount, walletAddress } = req.body;
-
-      // Validate required fields
-      if (!amount || !walletAddress) {
-        return sendError({
-          res,
-          message: 'Amount and wallet address are required',
-          statusCode: 400
-        });
-      }
-
-      // Validate amount is a positive number
-      if (isNaN(amount) || amount <= 0) {
-        return sendError({
-          res,
-          message: 'Amount must be a positive number',
-          statusCode: 400
-        });
-      }
-
-      // Get user
-      const user = await User.findById(req.user.userId);
-      if (!user) {
-        return sendError({
-          res,
-          message: 'User not found',
-          statusCode: 404
-        });
-      }
-
-      // Validate wallet address format (basic check, should be replaced with proper blockchain-specific validation)
-      const solanaWalletRegex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
-      if (!solanaWalletRegex.test(walletAddress)) {
-        return sendError({
-          res,
-          message: 'Invalid wallet address format',
-          statusCode: 400,
-          code: 'INVALID_WALLET_ADDRESS'
-        });
-      }
-
-      // Check if the wallet address matches the user's stored wallet address for extra security
-      if (user.walletAddress && user.walletAddress !== walletAddress) {
-        return sendError({
-          res,
-          message: 'Withdrawal wallet address does not match your account wallet address',
-          statusCode: 403,
-          code: 'WALLET_MISMATCH'
-        });
-      }
-
-      // TODO: Check user balance (implement once balance tracking is added)
-      
-      // Get client IP and user agent for security tracking
+      const { amount, withdrawalAddress } = req.body;
       const ipAddress = req.ip || req.socket.remoteAddress || '';
       const userAgent = req.headers['user-agent'] || '';
 
+      // Validate required fields
+      if (!amount || !withdrawalAddress) {
+        return responseHandler.badRequest(res, 'Amount and withdrawal address are required');
+      }
+
+      // Validate withdrawal address format
+      if (!isSolanaWalletAddress(withdrawalAddress)) {
+        return responseHandler.badRequest(res, 'Invalid Solana wallet address');
+      }
+
+      // Get user from database
+      const user = await UserModel.findById(req.user.userId);
+      if (!user) {
+        return responseHandler.notFound(res, 'User not found');
+      }
+
+      if (!user.circleWalletId) {
+        return responseHandler.notFound(res, 'User wallet not found');
+      }
+
+      // Generate a temporary transaction signature
+      const tempTxSignature = uuidv4();
+
       // Use transaction to ensure data consistency
       const result = await withMongoTransaction(async (session) => {
-        // Create withdrawal transaction
-        const withdrawal = new Transaction({
-          userId: req.user.userId,
+        // Create withdrawal transaction in pending state
+        const withdrawalDoc = await Transaction.create([{
           type: TransactionType.WITHDRAWAL,
           amount,
-          currency: 'USDC', // Default currency for now
-          status: TransactionStatus.PENDING,
-          walletAddress,
-          description: 'Withdrawal to wallet',
+          currency: 'USDC',
+          status: TransactionStatus.PROCESSING,
+          walletAddress: withdrawalAddress,
+          description: 'Withdrawal to external wallet',
           ipAddress,
           userAgent,
+          recipient: user._id,
+          fee: 0, // No fee for withdrawals currently
+          netAmount: amount,
+          txSignature: tempTxSignature,
+          blockExplorerUrl: `https://solscan.io/tx/${tempTxSignature}${SOLANA.RPC_URL.includes('devnet') ? '?cluster=devnet' : ''}`,
           metadata: {
-            requestedAt: new Date(),
-            clientInfo: {
-              ip: ipAddress,
-              userAgent: userAgent,
+            transactionType: 'withdrawal',
+            solana: {
+              network: SOLANA.RPC_URL.includes('devnet') ? 'devnet' : 'mainnet',
+              mint: SOLANA.USDC_MINT
             },
+            clientInfo: {
+              ipAddress,
+              userAgent
+            }
+          }
+        }], { session });
+
+        const withdrawal = withdrawalDoc[0];
+
+        // Initiate withdrawal with Circle
+        const circleWithdrawal = await CircleService.withdrawToExternalWallet(
+          user.circleWalletId,
+          withdrawalAddress,
+          amount
+        );
+
+        // Update transaction with Circle details
+        await Transaction.findByIdAndUpdate(
+          withdrawal._id,
+          {
+            $set: {
+              'metadata.circle': {
+                transactionId: circleWithdrawal.transactionId,
+                state: circleWithdrawal.status,
+                destinationAddress: withdrawalAddress,
+                amount: amount.toString()
+              }
+            }
           },
-        });
+          { session }
+        );
 
-        // Save with transaction session
-        await withdrawal.save({ session });
-
-        // TODO: Update user balance in the same transaction
-        // In a real implementation, you would also update the user's balance atomically
-        
-        // TODO: If this were a real system, also create a balance history record
-        // const balanceHistory = new BalanceHistory({
-        //   userId: req.user.userId,
-        //   transactionId: withdrawal._id,
-        //   amount: -amount,
-        //   balanceBefore: user.balance,
-        //   balanceAfter: user.balance - amount,
-        //   type: 'WITHDRAWAL',
-        // });
-        // await balanceHistory.save({ session });
-
-        return {
-          transactionId: withdrawal._id,
-          amount,
-          walletAddress,
-          status: withdrawal.status,
-          createdAt: withdrawal.createdAt,
-        };
+        return withdrawal;
       });
 
-      // Return success response
-      return sendSuccess({
-        res,
-        message: 'Withdrawal request created successfully',
-        data: result,
-        statusCode: 201
-      });
+      logger.info(`💸 Withdrawal initiated! Amount: ${amount} USDC, To: ${withdrawalAddress.slice(0,8)}...`);
+
+      return responseHandler.success(res, 'Withdrawal initiated successfully! 🎉', result);
     } catch (error) {
-      return handleControllerError(error, res);
+      return responseHandler.serverError(res, 'An unexpected error occurred');
     }
   }
 
@@ -605,6 +585,119 @@ export class TransactionController {
             createdAt: transaction.createdAt,
             completedAt: transaction.completedAt
           }
+        }
+      });
+    } catch (error) {
+      return handleControllerError(error, res);
+    }
+  }
+
+  /**
+   * Get withdrawal transaction status
+   * @param req - Express request object
+   * @param res - Express response object
+   */
+  static async getWithdrawalStatus(req: AuthenticatedRequest, res: Response) {
+    try {
+      // User must be authenticated
+      if (!req.user) {
+        return sendError({
+          res,
+          message: 'Authentication required',
+          statusCode: 401
+        });
+      }
+
+      const { transactionId } = req.params;
+
+      // Validate transaction ID
+      // if (!mongoose.Types.ObjectId.isValid(transactionId)) {
+      //   return sendError({
+      //     res,
+      //     message: 'Invalid transaction ID',
+      //     statusCode: 400,
+      //     code: 'INVALID_ID_FORMAT'
+      //   });
+      // }
+console.log({ transactionId })
+      // Find transaction
+      const transaction = await Transaction.findOne({ metadata : { circleTransaction: { id: transactionId } } })
+
+      if (!transaction) {
+        return sendError({
+          res,
+          message: 'Transaction not found',
+          statusCode: 404
+        });
+      }
+console.log({ transaction })
+      // Only the transaction owner can check status
+      if (transaction.recipient.toString() !== req.user.userId && 
+          !['admin', 'super_admin'].includes(req.user.role)) {
+        return sendError({
+          res,
+          message: 'Access denied. You are not authorized to view this transaction',
+          statusCode: 403,
+          code: 'UNAUTHORIZED_ACCESS'
+        });
+      }
+
+      // Verify it's a withdrawal transaction
+      if (transaction.type !== TransactionType.WITHDRAWAL) {
+        return sendError({
+          res,
+          message: 'This is not a withdrawal transaction',
+          statusCode: 400,
+          code: 'NOT_WITHDRAWAL_TRANSACTION'
+        });
+      }
+
+      let circleStatus = null;
+      let updatedStatus = transaction.status;
+
+      // Check with Circle for latest status if we have a transaction ID and status is not final
+      if (transaction.txHash && 
+          ![TransactionStatus.COMPLETED, TransactionStatus.FAILED, TransactionStatus.CANCELLED].includes(transaction.status)) {
+        try {
+          // Get status from Circle API
+          const statusResult = await CircleService.getWithdrawalStatus(transaction.metadata?.circleTransaction?.id);
+          console.log({ statusResult })
+          circleStatus = statusResult;
+          
+          // Update transaction status based on Circle status
+          if (statusResult.status === 'complete' && transaction.status !== TransactionStatus.COMPLETED) {
+            transaction.status = TransactionStatus.COMPLETED;
+            transaction.completedAt = new Date();
+            await transaction.save();
+            updatedStatus = TransactionStatus.COMPLETED;
+          } else if (statusResult.status === 'failed' && transaction.status !== TransactionStatus.FAILED) {
+            transaction.status = TransactionStatus.FAILED;
+            transaction.metadata.error = {
+              message: statusResult.errorReason || 'Transaction failed on blockchain',
+              timestamp: new Date()
+            };
+            await transaction.save();
+            updatedStatus = TransactionStatus.FAILED;
+          }
+        } catch (error) {
+          // Log error but don't fail the request
+          console.error('Error fetching Circle transaction status:', error);
+        }
+      }
+
+      // Return transaction status
+      return sendSuccess({
+        res,
+        message: 'Withdrawal status retrieved successfully',
+        data: {
+          transactionId: transaction._id,
+          circleTransactionId: transaction.txHash,
+          status: updatedStatus,
+          amount: transaction.amount,
+          walletAddress: transaction.walletAddress,
+          createdAt: transaction.createdAt,
+          completedAt: transaction.completedAt,
+          circleDetails: circleStatus
         }
       });
     } catch (error) {
