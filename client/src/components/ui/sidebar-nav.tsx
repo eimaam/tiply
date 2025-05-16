@@ -25,6 +25,7 @@ import { NotificationTrigger } from '@/components/notifications';
 import { UserNotification } from '@/components/notifications/NotificationTypes';
 import { useUser } from '@/contexts/UserContext';
 import { message } from 'antd';
+import { DevModeBanner } from './DevModeBanner';
 
 interface SidebarNavProps {
   username?: string;
@@ -175,6 +176,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
 
   return (
     <>
+      <DevModeBanner />
       <header className='border-b border-brand-border bg-brand-surface sticky top-0 z-20'>
         <div className='container mx-auto px-4 py-4'>
           <div className='flex justify-between items-center'>

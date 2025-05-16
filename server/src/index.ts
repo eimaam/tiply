@@ -20,7 +20,7 @@ import { connectDB } from './config/database';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// for rate-limiting behind proxies (deployed api in vercel) 
+// Trust proxy - required for secure cookies behind reverse proxies
 app.set('trust proxy', 1);
 
 // Configure CORS to allow credentials
@@ -41,13 +41,14 @@ const corsOptions = {
   },
   credentials: true, // Allow cookies to be sent with requests
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Debug-Refresh']
 };
-// Middleware
+
+// Apply middleware
 app.use(cors(corsOptions));
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser()); // Parse cookies for authentication
 
 // Apply global rate limiter to all requests
 app.use(globalRateLimiter);

@@ -11,6 +11,7 @@ import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui'
 import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets'
 import { clusterApiUrl } from '@solana/web3.js'
+import { DevModeProvider } from './contexts/DevModeContext'
 
 // Import Solana wallet adapter styles
 import '@solana/wallet-adapter-react-ui/styles.css'
@@ -29,13 +30,15 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <BrowserRouter>
       <ThemeProvider>
         <UserProvider>
-          <ConnectionProvider endpoint={endpoint}>
-            <WalletProvider wallets={wallets} autoConnect>
-              <WalletModalProvider>
-                <App />
-              </WalletModalProvider>
-            </WalletProvider>
-          </ConnectionProvider>
+          <DevModeProvider>
+            <ConnectionProvider endpoint={endpoint}>
+              <WalletProvider wallets={wallets} autoConnect>
+                <WalletModalProvider>
+                  <App />
+                </WalletModalProvider>
+              </WalletProvider>
+            </ConnectionProvider>
+          </DevModeProvider>
         </UserProvider>
       </ThemeProvider>
     </BrowserRouter>
