@@ -51,7 +51,6 @@ const ProtectedRoute = ({
 }: ProtectedRouteProps) => {
   const { user, isAuthenticated, isLoading } = useUser();
   const location = useLocation();
-  
   // Show loading spinner while checking authentication
   if (isLoading) {
     return (

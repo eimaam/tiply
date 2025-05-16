@@ -12,10 +12,14 @@ export function Login() {
   const navigate = useNavigate()
   const [isLoading, setIsLoading] = React.useState<boolean>(false)
   const [form] = Form.useForm()
-
+console.log({ user })
   React.useEffect(() => {
+
+  
     if (user) {
       navigate('/dashboard')
+    } else {
+      localStorage.clear()
     }
   }, [user])
   

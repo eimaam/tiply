@@ -46,6 +46,10 @@ const CIRCLE_ENV = {
     NodeEnv === "development"
       ? process.env.CIRCLE_SANDBOX_WALLET_SET_ID
       : process.env.CIRCLE_WALLET_SET_ID,
+  usdcTokenId:
+    NodeEnv === "development"
+      ? process.env.CIRCLE_SANDBOX_USDC_TOKEN_ID
+      : process.env.CIRCLE_USDC_TOKEN_ID,
   isSandbox: NodeEnv === "development" ? true : false,
   isProduction: NodeEnv === "production" ? true : false,
   isTest: NodeEnv === "development" ? true : false,
@@ -53,7 +57,7 @@ const CIRCLE_ENV = {
 
 const SOLANA = {
   RPC_URL: process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com',
-  USDC_MINT: process.env.USDC_MINT || '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU', // Devnet USDC mint
+  USDC_MINT: process.env.USDC_MINT_ADDRESS || '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU', // Devnet USDC mint
 }
 
 const MONGODB_URI =

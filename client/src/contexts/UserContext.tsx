@@ -121,7 +121,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const checkAuth = async () => {
       try {
         const response = await refreshUser();
-        console.log('User authenticated:', response);
         // Schedule token refresh if user is authenticated
         if (response) {
           scheduleTokenRefresh();
